@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Lab #1 — Point-in-area check</title>
+
+    <script src="js/jquery-3.7.1.min.js"></script>
+
+    <style>
+        html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          background: #fafafa;
+          color: #222;
+        }
+
+        .header {
+          font-family: monospace;
+          font-size: 18px;
+          color: #ffffff;
+          background: linear-gradient(90deg, #4b6cb7, #182848);
+          padding: 8px 0;
+          text-align: center;
+        }
+
+        .layout-table {
+          width: calc(100% - 40px);
+          margin: 20px auto;
+          border-collapse: collapse;
+          min-height: calc(100vh - 60px);
+          table-layout: fixed;
+        }
+
+        .layout-table > tbody > tr > td {
+          vertical-align: top;
+          padding: 12px;
+          border: 1px solid #d0d7de;
+          background: #fff;
+        }
+
+        .left-column {
+          width: 420px; /* fixed-ish so image stays readable */
+        }
+
+        .right-column {
+          width: auto;
+        }
+
+        .block {
+          margin-bottom: 16px;
+          padding: 12px;
+          border-radius: 6px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .block-title {
+          margin: 0 0 8px 0;
+          font-weight: 600;
+        }
+
+        .graph {
+          display: block;
+          height: 320px;
+          width: 320px;
+          margin: 10px auto;
+          border: 1px solid #e3e3e3;
+          border-radius: 6px;
+          background: white;
+        }
+
+        .params-row {
+          margin: 10px 0;
+          line-height: 1.9;
+        }
+
+        .params-row > label {
+          display: inline-block;
+          min-width: 30px;
+        }
+
+        input[type="radio"], input[type="checkbox"] {
+          cursor: pointer;
+          margin-left: 2%;
+          margin-right: 2%;
+        }
+
+        input[type="text"], select {
+          padding: 2%;
+          width: calc(100% - 8%);
+          box-sizing: border-box;
+          border: 1px solid #bbb;
+          border-radius: 4px;
+        }
+        input[type="text"]:focus, select:focus {
+          outline: none;
+          border-color: #4b6cb7;
+          box-shadow: 0 0 4px rgba(75,108,183,0.15);
+        }
+
+        .submit_button {
+          display: inline-block;
+          padding: 8px 20px;
+          margin-top: 6px;
+          border-radius: 6px;
+          border: 1px solid #cfcfcf;
+          background-color: #ffffff;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        .submit_button:hover { background-color: #f6f6f6; }
+        .submit_button:active { background-color: #e6e3e3; }
+
+        .result-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .result-header {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+          background: #f3f6fb;
+          padding: 8px;
+          border-radius: 6px 6px 0 0;
+          font-weight: 700;
+        }
+
+        #result {
+          margin-top: 8px;
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          border: 1px solid #e6e6e6;
+          border-radius: 6px;
+        }
+
+        .result-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+          gap: 6px;
+          align-items: center;
+          padding: 6px 8px;
+          border-bottom: 1px solid #eee;
+          font-size: 14px;
+        }
+
+        .result-row:nth-child(odd) { background: #fff; }
+        .result-row:nth-child(even) { background: #fbfbff; }
+
+        .left-column > .block > .params-row > div > input[type="checkbox"] {
+          /* child selector demonstration */
+        }
+
+        .muted { color: #6f6f6f; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    Pleshivtsev Kirill — Group P3308 — Variant #769874
+</header>
+
+<table class="layout-table" role="presentation" aria-label="Main layout">
+    <tbody>
+    <tr>
+        <td class="left-column" valign="top">
+            <div class="block" aria-hidden="false">
+                <div class="block-title">Graph</div>
+                <img class="graph" src="media/graph.svg" alt="area graph (svg)" />
+            </div>
+
+            <div class="block" id="controls">
+                <div class="block-title">Parameters</div>
+
+                <div class="params-row" id="x-row">
+                    <label for="x-input">X:</label>
+                    <input name="x-value" id="x-input" type="text" placeholder="value in (-3, 3)" maxlength="12" />
+                    <div class="muted" style="margin-top:6px;">Allowed: integer or decimal (dot or comma). Must satisfy -3 &lt; X &lt; 3</div>
+                </div>
+
+                <div class="params-row" id="y-row">
+                    <label for="y-select">Y:</label>
+                    <select name="y-value" id="y-select">
+                        <option value="" selected disabled>Select Y</option>
+                        <option value="-3">-3</option>
+                        <option value="-2">-2</option>
+                        <option value="-1">-1</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                    <div class="muted" style="margin-top:6px;">Choose one of the allowed integer values.</div>
+                </div>
+
+                <div class="params-row" id="r-row">
+                    <label for="r-input">R:</label>
+                    <input name="r-value" id="r-input" type="text" placeholder="value in (2, 5)" maxlength="12" />
+                    <div class="muted" style="margin-top:6px;">Allowed: integer or decimal (dot or comma). Must satisfy 2 &lt; R &lt; 5</div>
+                </div>
+
+                <button id="submit" class="submit_button" type="button">Check</button>
+            </div>
+        </td>
+
+        <td class="right-column" valign="top">
+            <div class="block">
+                <div class="block-title">Result</div>
+
+                <div class="result-header" role="row">
+                    <div>Submission time</div>
+                    <div>X</div>
+                    <div>Y</div>
+                    <div>R</div>
+                    <div>Hit</div>
+                    <div>Exec time</div>
+                </div>
+
+                <div id="result" aria-live="polite" aria-atomic="true"></div>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<script>
+    function parseStrictNumber(str) {
+      if (typeof str !== "string") return NaN;
+      str = str.trim();
+      if (str === "") return NaN;
+      str = str.replace(",", ".");
+      if (!/^[+-]?\d+(\.\d+)?$/.test(str)) return NaN;
+      return parseFloat(str);
+    }
+
+    $("#submit").on("click", function() {
+      let xRaw = $("input[name='x-value']").val();
+      let yVal = $("select[name='y-value']").val();
+      let rRaw = $("input[name='r-value']").val();
+
+      if (typeof xRaw === "undefined" || xRaw.trim() === "") {
+        alert("Please enter an X value.");
+        return;
+      }
+      if (typeof yVal === "undefined" || yVal === "" || yVal === null) {
+        alert("Please select a Y value.");
+        return;
+      }
+      if (typeof rRaw === "undefined" || rRaw.trim() === "") {
+        alert("Please enter an R value.");
+        return;
+      }
+
+      let xNum = parseStrictNumber(xRaw);
+      if (isNaN(xNum)) {
+        alert("X must be a number (use digits and optional decimal point or comma).");
+        return;
+      }
+      if (!(xNum > -3 && xNum < 3)) {
+        alert("X must be in the open interval (-3, 3).");
+        return;
+      }
+
+      let rNum = parseStrictNumber(rRaw);
+      if (isNaN(rNum)) {
+        alert("R must be a number (use digits and optional decimal point or comma).");
+        return;
+      }
+      if (!(rNum > 2 && rNum < 5)) {
+        alert("R must be in the open interval (2, 5).");
+        return;
+      }
+
+      let jsonData = {
+        "x": xNum.toString(),
+        "y": yVal,
+        "r": rNum.toString()
+      };
+
+      $.ajax({
+        url: "/fcgi-bin/?" + $.param(jsonData),
+        type: "POST",
+        dataType: "json",
+        success: function(response) {
+          if (response == null) {
+            alert("Empty server response");
+            return;
+          }
+          if (response.error != null) {
+            alert("Server error");
+            console.error(response);
+            return;
+          }
+          let hitText = response.result ? "Yes" : "No";
+          let exec = response.exec_time != null ? response.exec_time + " ms" : "";
+          let submissionTime = "";
+          if (response.current_time) {
+            let parts = ("" + response.current_time).split(" ");
+            submissionTime = parts.length > 1 ? parts[1] : response.current_time;
+          }
+
+          let $row = $("<div></div>").addClass("result-row");
+          $row.append($("<div></div>").text(submissionTime));
+          $row.append($("<div></div>").text(jsonData.x));
+          $row.append($("<div></div>").text(jsonData.y));
+          $row.append($("<div></div>").text(jsonData.r));
+          $row.append($("<div></div>").text(hitText));
+          $row.append($("<div></div>").text(exec));
+
+          $("#result").prepend($row);
+        },
+        error: function(xhr, status, error) {
+          alert("AJAX error: " + error);
+        }
+      });
+    });
+</script>
+</body>
+</html>

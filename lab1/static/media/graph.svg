@@ -1,0 +1,29 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" class="graph" id="graph">
+
+    <g>
+        <title>Layer 1</title>
+        <polygon stroke="null" id="svg_1" fill="#1638b2" fill-opacity="0.5" points="200,200 30,200 200,29.943477118439432 "/>
+        <rect stroke="null" id="svg_2" fill="#1638b2" fill-opacity="0.5" height="169.64628" width="169.71014" y="200" x="200"/>
+        <path transform="rotate(-90 284.93 114.916)" stroke="null" id="svg_3" fill="#1638b2" fill-opacity="0.5" d="m369.55903,29.98643a179.21429,179.85186 0 0 1 -169.25794,169.86009l0,-169.86009l169.25794,0z"/>
+        <line id="svg_4" stroke="#000000" y2="200" x2="400" y1="200" x1="0"/>
+        <line id="svg_5" stroke="#000000" y2="400" x2="200" y1="0" x1="200"/>
+        <line id="svg_6" stroke="#000000" y2="202" x2="370" y1="198" x1="370"/>
+        <line id="svg_7" stroke="#000000" y2="202" x2="285" y1="198" x1="285"/>
+        <line id="svg_8" stroke="#000000" y2="202" x2="115" y1="198" x1="115"/>
+        <line id="svg_9" stroke="#000000" y2="202" x2="30" y1="198" x1="30"/>
+        <line id="svg_10" stroke="#000000" y2="30" x2="202" y1="30" x1="198"/>
+        <line id="svg_11" stroke="#000000" y2="115" x2="202" y1="115" x1="198"/>
+        <line id="svg_12" stroke="#000000" y2="285" x2="202" y1="285" x1="198"/>
+        <line id="svg_13" stroke="#000000" y2="370" x2="202" y1="370" x1="198"/>
+        <polygon id="svg_14" stroke="#000000" fill="#000000" points="400,200 392,203 392,197"/>
+        <polygon id="svg_15" stroke="#000000" fill="#000000" points="200,0 197,8 203,8"/>
+        <text id="svg_16" font-family=" sans-serif" y="190" x="365">R</text>
+        <text id="svg_17" font-family=" sans-serif" y="190" x="273">R/2</text>
+        <text id="svg_18" font-family=" sans-serif" y="190" x="98">-R/2</text>
+        <text id="svg_19" font-family=" sans-serif" y="190" x="20">-R</text>
+        <text id="svg_20" font-family=" sans-serif" y="35" x="206">R</text>
+        <text id="svg_21" font-family=" sans-serif" y="120" x="206">R/2</text>
+        <text id="svg_22" font-family=" sans-serif" y="289" x="206">-R/2</text>
+        <text id="svg_23" font-family=" sans-serif" y="373" x="206">-R</text>
+    </g>
+</svg>
