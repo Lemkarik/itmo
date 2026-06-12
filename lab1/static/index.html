@@ -62,12 +62,16 @@
 
         .graph {
           display: block;
-          height: 320px;
-          width: 320px;
+          height: 100%;
+          width: 100%;
           margin: 10px auto;
           border: 1px solid #e3e3e3;
           border-radius: 6px;
           background: white;
+        }
+
+        .graph-container {
+            width: 400px;
         }
 
         .params-row {
@@ -166,7 +170,8 @@
         <td class="left-column" valign="top">
             <div class="block" aria-hidden="false">
                 <div class="block-title">Graph</div>
-                <img class="graph" src="media/graph.svg" alt="area graph (svg)" />
+                <div id="graph-container" >
+                </div>
             </div>
 
             <div class="block" id="controls">
@@ -293,29 +298,171 @@
             console.error(response);
             return;
           }
-          let hitText = response.result ? "Yes" : "No";
-          let exec = response.exec_time != null ? response.exec_time + " ms" : "";
-          let submissionTime = "";
-          if (response.current_time) {
-            let parts = ("" + response.current_time).split(" ");
-            submissionTime = parts.length > 1 ? parts[1] : response.current_time;
-          }
+           let hitBool = !!response.result;
+           let exec = response.exec_time != null ? response.exec_time : "";
+           let submissionTime = "";
+           if (response.current_time) {
+             let parts = ("" + response.current_time).split(" ");
+             submissionTime = parts.length > 1 ? parts[1] : response.current_time;
+           }
 
-          let $row = $("<div></div>").addClass("result-row");
-          $row.append($("<div></div>").text(submissionTime));
-          $row.append($("<div></div>").text(jsonData.x));
-          $row.append($("<div></div>").text(jsonData.y));
-          $row.append($("<div></div>").text(jsonData.r));
-          $row.append($("<div></div>").text(hitText));
-          $row.append($("<div></div>").text(exec));
+           let entry = {
+             time: submissionTime,
+             x: jsonData.x,
+             y: jsonData.y,
+             r: jsonData.r,
+             hit: hitBool,
+             exec: exec
+           };
 
-          $("#result").prepend($row);
-        },
+          addHistoryEntry(entry);
+
+          const currentRraw = $("#r-input").val();
+          const currentRnum = parseStrictNumber(String(currentRraw || ""));
+          const drawR = (!isNaN(currentRnum) && currentRnum > 2 && currentRnum < 5) ? currentRnum : Number(entry.r);
+          drawPoint(entry.x, entry.y, drawR, entry.hit);
+},
         error: function(xhr, status, error) {
           alert("AJAX error: " + error);
         }
       });
     });
+
+    const HISTORY_KEY = "pointsHistory_v1";
+
+    function renderEntryRow(entry) {
+      const $row = $("<div></div>").addClass("result-row");
+      $row.append($("<div></div>").text(entry.time || ""));
+      $row.append($("<div></div>").text(entry.x));
+      $row.append($("<div></div>").text(entry.y));
+      $row.append($("<div></div>").text(entry.r));
+      $row.append($("<div></div>").text(entry.hit ? "Yes" : "No"));
+      $row.append($("<div></div>").text(entry.exec ? entry.exec + " ms" : ""));
+      return $row;
+    }
+
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        console.error("Failed to parse history:", e);
+        return [];
+      }
+    }
+
+    function saveHistory(arr) {
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+      } catch (e) {
+        console.error("Failed to save history:", e);
+      }
+    }
+
+    function addHistoryEntry(entry) {
+      const history = loadHistory();
+      history.unshift(entry);
+      if (history.length > 500) history.length = 500;
+      saveHistory(history);
+
+      const $row = renderEntryRow(entry);
+      $("#result").prepend($row);
+    }
+
+    function renderAllHistory() {
+      const history = loadHistory();
+      $("#result").empty();
+      for (const e of history) {
+        $("#result").append(renderEntryRow(e));
+      }
+      const curRraw = $("#r-input").val();
+      const curRnum = parseStrictNumber(String(curRraw || ""));
+      if (!isNaN(curRnum) && curRnum > 2 && curRnum < 5) {
+        redrawAllPointsUsingR(curRnum);
+      } else {
+        redrawAllPointsUsingSavedR();
+      }
+    }
+
+    function clearHistoryDots() {
+      const svg = document.getElementById('graph');
+      if (!svg) return;
+      const toRemove = svg.querySelectorAll('circle.history-dot');
+      toRemove.forEach(c => c.remove());
+    }
+
+    function drawPoint(x, y, scaleR, result) {
+          x = Number(x); y = Number(y); scaleR = Number(scaleR);
+          if (isNaN(x) || isNaN(y) || isNaN(scaleR)) return;
+
+          const svg = document.getElementById('graph');
+          if (!svg) return;
+
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          const cx = x * 170 / scaleR + 200;
+          const cy = -y * 170 / scaleR + 200;
+
+          circle.setAttribute("cx", cx);
+          circle.setAttribute("cy", cy);
+          circle.setAttribute("r", 4);
+          circle.setAttribute("stroke", "black");
+          circle.setAttribute("stroke-width", "1");
+          circle.setAttribute("fill", result ? "#0ecc14" : "#d1220f");
+
+          circle.classList.add("history-dot");
+          circle.setAttribute("data-x", String(x));
+          circle.setAttribute("data-y", String(y));
+          circle.setAttribute("data-r-used", String(scaleR));
+
+          svg.appendChild(circle);
+    }
+
+    function redrawAllPointsUsingR(scaleR) {
+      clearHistoryDots();
+      const history = loadHistory();
+      for (const entry of history) {
+        drawPoint(entry.x, entry.y, scaleR, !!entry.hit);
+      }
+    }
+
+    function redrawAllPointsUsingSavedR() {
+      clearHistoryDots();
+      const history = loadHistory();
+      for (const entry of history) {
+        const entryR = parseStrictNumber(String(entry.r || ""));
+        const rToUse = (!isNaN(entryR) && entryR > 0) ? entryR : 1;
+        drawPoint(entry.x, entry.y, rToUse, !!entry.hit);
+      }
+    }
+
+    $("#r-input").on("input change", function() {
+      const raw = $(this).val();
+      const rnum = parseStrictNumber(String(raw || ""));
+      if (!isNaN(rnum) && rnum > 2 && rnum < 5) {
+        redrawAllPointsUsingR(rnum);
+      }
+    });
+
+    fetch('/media/graph.svg')
+      .then(r => r.text())
+      .then(svgText => {
+        const container = document.getElementById('graph-container');
+
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+        const svgEl = svgDoc.documentElement;
+
+        svgEl.id = svgEl.id || 'graph';
+        svgEl.classList.add('graph');
+
+        container.innerHTML = '';
+        container.appendChild(document.importNode(svgEl, true));
+
+        renderAllHistory();
+      })
+      .catch(err => console.error('Failed to load SVG:', err));
 </script>
 </body>
 </html>

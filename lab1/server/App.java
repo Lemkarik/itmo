@@ -22,7 +22,7 @@ public class App {
 
                 if (Validator.validateX(x) && Validator.validateY(y) && Validator.validateR(r)) {
                     LocalDateTime endedAt = LocalDateTime.now();
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    DateTimeFormatter format mter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
                     sendJson(String.format(
                         "{\"result\": %b, \"current_time\": \"%s\", \"exec_time\": \"%s\"}", 

@@ -1,0 +1,1989 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-04-17T13:00:00.000Z",
+  "__export_source": "codex.cli",
+  "resources": [
+    {
+      "_id": "env_jwt_tokens",
+      "parentId": "wrk_delivery_scenario",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "JWT Tokens (auto-set by login requests)",
+      "data": {
+        "jwt_admin": "",
+        "jwt_alice": "",
+        "jwt_bob": "",
+        "jwt_shop": "",
+        "jwt_courier1": "",
+        "jwt_courier2": ""
+      },
+      "_type": "environment"
+    },
+    {
+      "_id": "wrk_delivery_scenario",
+      "parentId": null,
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Delivery Service Full Scenario",
+      "description": "Run login requests first - each saves its JWT token into an environment variable (e.g., {{ jwt_admin }}, {{ jwt_alice }}, {{ jwt_shop }}, {{ jwt_courier1 }}). Then run any protected request - it will automatically use the saved token.",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_all_scenarios",
+      "parentId": "wrk_delivery_scenario",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Delivery Service Scenarios",
+      "description": "Delete and re-import this one parent folder if needed. Run requests in order from top to bottom against a fresh database.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_auth",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "00. Authentication (Login)",
+      "description": "Login as different users to get JWT tokens. Tokens are valid for 24 hours.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_helpers",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "01. Helpers",
+      "description": "Endpoints that work with any authenticated user.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_happy",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "10. Happy Path",
+      "description": "Creates customer id 2, courier id 3, and order id 1.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_decline",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "20. Shop Decline Path",
+      "description": "Creates customer id 4 and order id 2.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_no_courier",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "30. No Courier Path",
+      "description": "Creates customer id 5 and order id 3. Works best after happy path so courier id 3 is unavailable.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_fld_invalid",
+      "parentId": "fld_all_scenarios",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "40. Invalid Requests",
+      "description": "Negative tests for auth failures, validation, pagination, etc.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_login_as_admin",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Admin",
+      "description": "Username: admin, password: admin123. After response saves token to {{ jwt_admin }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_admin",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"admin\", \"password\": \"admin123\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_admin\", response.token);"
+    },
+    {
+      "_id": "req_login_as_alice_customer",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Alice (CUSTOMER)",
+      "description": "Username: alice, password: password. After response saves token to {{ jwt_alice }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_alice_custo",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"alice\", \"password\": \"password\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_alice\", response.token);"
+    },
+    {
+      "_id": "req_login_as_bob_customer",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Bob (CUSTOMER)",
+      "description": "Username: bob, password: password. After response saves token to {{ jwt_bob }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_bob_custome",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"bob\", \"password\": \"password\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_bob\", response.token);"
+    },
+    {
+      "_id": "req_login_as_shop",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Shop",
+      "description": "Username: shop, password: shop123. After response saves token to {{ jwt_shop }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_shop",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"shop\", \"password\": \"shop123\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_shop\", response.token);"
+    },
+    {
+      "_id": "req_login_as_courier1",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Courier1",
+      "description": "Username: courier1, password: courier123. After response saves token to {{ jwt_courier1 }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_courier1",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"courier1\", \"password\": \"courier123\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_courier1\", response.token);"
+    },
+    {
+      "_id": "req_login_as_courier2",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login as Courier2",
+      "description": "Username: courier2, password: courier456. After response saves token to {{ jwt_courier2 }}.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_login_as_courier2",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"courier2\", \"password\": \"courier456\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "const response = insomnia.response.json();\ninsomnia.environment.set(\"jwt_courier2\", response.token);"
+    },
+    {
+      "_id": "req_login_invalid_credentials",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Login Invalid Credentials",
+      "description": "Expected: 401 Unauthorized. Tests that wrong password is rejected.",
+      "url": "http://localhost:32318/api/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_login_wrong",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"admin\", \"password\": \"wrongpass\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_health_check",
+      "parentId": "fld_fld_helpers",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Health Check",
+      "description": "Public endpoint, no auth required. Expected: 200 OK.",
+      "url": "http://localhost:32318/api/health",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_list_shop_items",
+      "parentId": "fld_fld_helpers",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "List Shop Items",
+      "description": "Any authenticated user (PRIVILEGE_VIEW_ITEMS). Expected: items 1,2,3 on fresh start. Use any token.",
+      "url": "http://localhost:32318/api/items?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_list_shop_items",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_shop_pending_orders",
+      "parentId": "fld_fld_helpers",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Shop Pending Orders",
+      "description": "Use SHOP token (PRIVILEGE_VIEW_ALL_ORDERS).",
+      "url": "http://localhost:32318/api/shop/orders?status=PENDING_SHOP&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_shop_pending_orders",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_shop_all_orders",
+      "parentId": "fld_fld_helpers",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Shop All Orders",
+      "description": "Use SHOP token. Lists all orders.",
+      "url": "http://localhost:32318/api/shop/orders?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_shop_all_orders",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_shop_notifications",
+      "parentId": "fld_fld_helpers",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Shop Notifications",
+      "description": "Use SHOP token (PRIVILEGE_VIEW_SHOP_NOTIFICATIONS).",
+      "url": "http://localhost:32318/api/shop/notifications?unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_shop_notifications",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_happy_customer",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Create Happy Customer",
+      "description": "Create CUSTOMER user. Expected id: 2. Use ADMIN token (PRIVILEGE_MANAGE_USERS).",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_happy_customer",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_create_happy_customer",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Alice Happy\", \"role\": \"CUSTOMER\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_available_courier",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Create Available Courier",
+      "description": "Create COURIER user. Expected id: 3. Use ADMIN token.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_happy_courier",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_create_available_courier",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Carl Courier\", \"role\": \"COURIER\", \"available\": true}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_add_item_1_to_cart",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Add Item 1 to Cart",
+      "description": "Add shop item 1, qty 2. Use CUSTOMER token (PRIVILEGE_MANAGE_CART).",
+      "url": "http://localhost:32318/api/customers/2/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_happy_add1",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_happy_add_item_1_to_cart",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": 1, \"quantity\": 2}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_add_item_2_to_cart",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Add Item 2 to Cart",
+      "description": "Add shop item 2, qty 1. Use CUSTOMER token.",
+      "url": "http://localhost:32318/api/customers/2/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_happy_add2",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_happy_add_item_2_to_cart",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": 2, \"quantity\": 1}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_get_cart",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Get Cart",
+      "description": "View cart contents. Use CUSTOMER token.",
+      "url": "http://localhost:32318/api/customers/2/cart",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_get_cart",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_remove_first_cart_item",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Remove First Cart Item",
+      "description": "Remove cart item id 1 (optional). Use CUSTOMER token.",
+      "url": "http://localhost:32318/api/customers/2/cart/items/1",
+      "method": "DELETE",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_remove_first_cart_i",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_create_order",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Create Order",
+      "description": "Create order from cart. Expected id: 1. Use CUSTOMER token (PRIVILEGE_CREATE_ORDER).",
+      "url": "http://localhost:32318/api/customers/2/orders",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_happy_order",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_happy_create_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"deliveryAddress\": \"221B Baker Street\", \"deliveryTime\": \"2026-04-17T18:30:00+00:00\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_get_order",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Get Order",
+      "description": "View order 1. Use CUSTOMER token (PRIVILEGE_VIEW_OWN_ORDERS).",
+      "url": "http://localhost:32318/api/orders/1",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_get_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_shop_accept_order",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Shop Accept Order",
+      "description": "Accept order 1. Use SHOP token (PRIVILEGE_MANAGE_ORDER_STATUS).",
+      "url": "http://localhost:32318/api/shop/orders/1/accept",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_shop_accept_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_customer_notifications",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Customer Notifications",
+      "description": "View notifications for user 2. Use CUSTOMER token (PRIVILEGE_VIEW_NOTIFICATIONS).",
+      "url": "http://localhost:32318/api/notifications?userId=2&unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_customer_notificati",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_courier_notifications",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Courier Notifications",
+      "description": "View notifications for user 3. Use COURIER token.",
+      "url": "http://localhost:32318/api/notifications?userId=3&unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_courier_notificatio",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_happy_courier_orders",
+      "parentId": "fld_fld_happy",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Happy Courier Orders",
+      "description": "View courier 3's orders. Use COURIER token (PRIVILEGE_VIEW_OWN_ORDERS).",
+      "url": "http://localhost:32318/api/couriers/3/orders?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_happy_courier_orders",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_decline_create_customer",
+      "parentId": "fld_fld_decline",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Decline Create Customer",
+      "description": "Create CUSTOMER user. Expected id: 4. Use ADMIN token.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_decline_customer",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_decline_create_customer",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Diana Decline\", \"role\": \"CUSTOMER\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_decline_add_item_to_cart",
+      "parentId": "fld_fld_decline",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Decline Add Item to Cart",
+      "description": "Add item 1 to customer 4's cart. Use ADMIN token.",
+      "url": "http://localhost:32318/api/customers/4/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_decline_item",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_decline_add_item_to_cart",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": 1, \"quantity\": 1}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_decline_create_order",
+      "parentId": "fld_fld_decline",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Decline Create Order",
+      "description": "Create order for customer 4. Expected id: 2. Use ADMIN token.",
+      "url": "http://localhost:32318/api/customers/4/orders",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_decline_order",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_decline_create_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"deliveryAddress\": \"10 Downing Street\", \"deliveryTime\": \"2026-04-17T19:00:00+00:00\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_decline_shop_decline_order",
+      "parentId": "fld_fld_decline",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Decline Shop Decline Order",
+      "description": "Decline order 2. Use SHOP token.",
+      "url": "http://localhost:32318/api/shop/orders/2/decline",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_decline_reason",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_decline_shop_decline_orde",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"reason\": \"Out of stock\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_decline_customer_notifications",
+      "parentId": "fld_fld_decline",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Decline Customer Notifications",
+      "description": "View notifications for user 4. Use CUSTOMER token.",
+      "url": "http://localhost:32318/api/notifications?userId=4&unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_decline_customer_notifica",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_create_customer",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Create Customer",
+      "description": "Create CUSTOMER user. Expected id: 5. Use ADMIN token.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_nocourier_customer",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_nocourier_create_customer",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Nora NoCourier\", \"role\": \"CUSTOMER\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_add_item",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Add Item",
+      "description": "Add item 3 to customer 5's cart. Use ADMIN token.",
+      "url": "http://localhost:32318/api/customers/5/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_nocourier_item",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_nocourier_add_item",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": 3, \"quantity\": 1}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_create_order",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Create Order",
+      "description": "Create order for customer 5. Expected id: 3. Use ADMIN token.",
+      "url": "http://localhost:32318/api/customers/5/orders",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_nocourier_order",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_nocourier_create_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"deliveryAddress\": \"42 Timeout Road\", \"deliveryTime\": \"2026-04-17T19:30:00+00:00\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_shop_accept_order",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Shop Accept Order",
+      "description": "Accept order 3. Use SHOP token. Courier 3 may be busy.",
+      "url": "http://localhost:32318/api/shop/orders/3/accept",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_nocourier_shop_accept_ord",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_get_order",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Get Order",
+      "description": "View order 3. Expected: ACCEPTED_WAITING_COURIER initially.",
+      "url": "http://localhost:32318/api/orders/3",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_nocourier_get_order",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_customer_notifications",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Customer Notifications",
+      "description": "Run after ~10 min timeout to see cancellation notification for user 5.",
+      "url": "http://localhost:32318/api/notifications?userId=5&unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_nocourier_customer_notifi",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_nocourier_shop_orders",
+      "parentId": "fld_fld_no_courier",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "NoCourier Shop Orders",
+      "description": "Run after timeout to confirm order 3 becomes CANCELLED_NO_COURIER.",
+      "url": "http://localhost:32318/api/shop/orders?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_nocourier_shop_orders",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_no_auth_token",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid No Auth Token",
+      "description": "Expected: 403 Forbidden. Request with NO Authorization header.",
+      "url": "http://localhost:32318/api/items?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_bad_auth_token",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Bad Auth Token",
+      "description": "Expected: 401 Unauthorized. Request with invalid JWT token.",
+      "url": "http://localhost:32318/api/items?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_bad_auth",
+          "name": "Authorization",
+          "value": "Bearer invalid-jwt-token-here",
+          "description": "Intentionally invalid JWT token"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_create_user",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Create User",
+      "description": "Expected: 403 Forbidden. COURIER lacks PRIVILEGE_MANAGE_USERS.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_forbidden_create",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_courier_create_us",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Test\", \"role\": \"CUSTOMER\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_customer_accept_order",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Customer Accept Order",
+      "description": "Expected: 403 Forbidden. CUSTOMER lacks PRIVILEGE_MANAGE_ORDER_STATUS.",
+      "url": "http://localhost:32318/api/shop/orders/1/accept",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_customer_accept_o",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_view_shop_orders",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier View Shop Orders",
+      "description": "Expected: 403 Forbidden. COURIER lacks PRIVILEGE_VIEW_ALL_ORDERS.",
+      "url": "http://localhost:32318/api/shop/orders?page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_view_shop",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_customer_view_shop_notifs",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Customer View Shop Notifs",
+      "description": "Expected: 403 Forbidden. CUSTOMER lacks PRIVILEGE_VIEW_SHOP_NOTIFICATIONS.",
+      "url": "http://localhost:32318/api/shop/notifications?unreadOnly=true&page=1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_customer_view_sho",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_clear_database",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Clear Database",
+      "description": "Expected: 403 Forbidden. COURIER lacks PRIVILEGE_MANAGE_DATABASE.",
+      "url": "http://localhost:32318/api/testing/database/clear",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_clear_dat",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_health_post_method",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Health Post Method",
+      "description": "Expected: 405 Method Not Allowed.",
+      "url": "http://localhost:32318/api/health",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_health_post_metho",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_non_existing_url",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Non Existing URL",
+      "description": "Expected: 404.",
+      "url": "http://localhost:32318/api/does-not-exist",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_non_existing_url",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_clear_db_wrong_method",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Clear DB Wrong Method",
+      "description": "Expected: 405. Clear DB is POST not GET.",
+      "url": "http://localhost:32318/api/testing/database/clear",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_clear_db_wrong_me",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_items_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Items Negative Page",
+      "description": "Expected: 400, page >= 1.",
+      "url": "http://localhost:32318/api/items?page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_items_negative_pa",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_items_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Items String Page",
+      "description": "Expected: 400, page not numeric.",
+      "url": "http://localhost:32318/api/items?page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_items_string_page",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_items_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Items Large PageSize",
+      "description": "Expected: 400, pageSize <= 100.",
+      "url": "http://localhost:32318/api/items?page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_items_large_pages",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_notif_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Notif Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/notifications?unreadOnly=true&page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_notif_negati",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_notif_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Notif String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/notifications?unreadOnly=true&page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_notif_string",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_notif_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Notif Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/notifications?unreadOnly=true&page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_notif_large_",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_orders_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Orders Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_orders_negat",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_orders_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Orders String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_orders_strin",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_shop_orders_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Shop Orders Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_shop_orders_large",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_create_user_missing_name",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Create User Missing Name",
+      "description": "Expected: 400, name required.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_missing_name",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_create_user_missi",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"role\": \"CUSTOMER\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_create_user_bad_role",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Create User Bad Role",
+      "description": "Expected: 400, invalid role.",
+      "url": "http://localhost:32318/api/users",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_bad_role",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_create_user_bad_r",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_admin }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"Bad Role\", \"role\": \"NOT_A_ROLE\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_cart_negative_quantity",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Cart Negative Quantity",
+      "description": "Expected: 400, quantity positive.",
+      "url": "http://localhost:32318/api/customers/2/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_neg_qty",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_cart_negative_qua",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": 1, \"quantity\": -1}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_cart_string_shopitemid",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Cart String ShopItemId",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/customers/2/cart/items",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_string_item",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_cart_string_shopi",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"shopItemId\": \"oops\", \"quantity\": 1}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_get_cart_bad_customerid",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Get Cart Bad CustomerId",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/customers/not-a-number/cart",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_get_cart_bad_cust",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_remove_cart_item_not_found",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Remove Cart Item Not Found",
+      "description": "Expected: 404.",
+      "url": "http://localhost:32318/api/customers/2/cart/items/999999",
+      "method": "DELETE",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_remove_cart_item_",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_remove_cart_item_bad_id",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Remove Cart Item Bad Id",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/customers/2/cart/items/not-a-number",
+      "method": "DELETE",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_remove_cart_item_",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_create_order_missing_address",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Create Order Missing Address",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/customers/2/orders",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_no_addr",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_create_order_miss",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"deliveryTime\": \"2026-04-17T18:30:00+00:00\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_create_order_bad_time",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Create Order Bad Time",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/customers/2/orders",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_bad_time",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_create_order_bad_",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"deliveryAddress\": \"Broken St\", \"deliveryTime\": \"not-a-date\"}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_get_order_not_found",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Get Order Not Found",
+      "description": "Expected: 404.",
+      "url": "http://localhost:32318/api/orders/999999",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_get_order_not_fou",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_accept_order_not_found",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Accept Order Not Found",
+      "description": "Expected: 404.",
+      "url": "http://localhost:32318/api/shop/orders/999999/accept",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_accept_order_not_",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_customer_notif_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Customer Notif Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=2&unreadOnly=true&page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_customer_notif_ne",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_customer_notif_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Customer Notif String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=2&unreadOnly=true&page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_customer_notif_st",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_customer_notif_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Customer Notif Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=2&unreadOnly=true&page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_customer_notif_la",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_notif_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Notif Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=3&unreadOnly=true&page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_notif_neg",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_notif_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Notif String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=3&unreadOnly=true&page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_notif_str",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_notif_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Notif Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=3&unreadOnly=true&page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_notif_lar",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_orders_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Orders Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/couriers/3/orders?page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_orders_ne",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_orders_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Orders String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/couriers/3/orders?page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_orders_st",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_courier_orders_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Courier Orders Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/couriers/3/orders?page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_courier_orders_la",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_courier1 }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_decline_c_notif_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Decline C Notif Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=4&unreadOnly=true&page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_decline_c_notif_n",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_decline_c_notif_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Decline C Notif String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=4&unreadOnly=true&page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_decline_c_notif_s",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_decline_c_notif_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Decline C Notif Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=4&unreadOnly=true&page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_decline_c_notif_l",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_decline_order_malformed_json",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid Decline Order Malformed JSON",
+      "description": "Expected: 400 malformed JSON.",
+      "url": "http://localhost:32318/api/shop/orders/2/decline",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_bad_json",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        },
+        {
+          "id": "hdr_auth_invalid_decline_order_mal",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"reason\": \n}"
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_customer_notif_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Customer Notif Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=5&unreadOnly=true&page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_customer_notif",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_customer_notif_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Customer Notif String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=5&unreadOnly=true&page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_customer_notif",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_customer_notif_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Customer Notif Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/notifications?userId=5&unreadOnly=true&page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_customer_notif",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_alice }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_shop_orders_negative_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Shop Orders Negative Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=-1&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_shop_orders_ne",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_shop_orders_string_page",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Shop Orders String Page",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=oops&pageSize=100",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_shop_orders_st",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_invalid_nc_shop_orders_large_pagesize",
+      "parentId": "fld_fld_invalid",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Invalid NC Shop Orders Large PageSize",
+      "description": "Expected: 400.",
+      "url": "http://localhost:32318/api/shop/orders?page=1&pageSize=101",
+      "method": "GET",
+      "headers": [
+        {
+          "id": "hdr_auth_invalid_nc_shop_orders_la",
+          "name": "Authorization",
+          "value": "Bearer {{ jwt_shop }}",
+          "description": "Uses token saved by the corresponding login request"
+        }
+      ],
+      "body": {},
+      "_type": "request"
+    }
+  ]
+}
