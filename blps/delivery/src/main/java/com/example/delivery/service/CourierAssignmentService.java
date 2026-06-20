@@ -4,9 +4,12 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.delivery.messaging.AsyncEventPublisher;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -18,20 +21,25 @@ import com.example.delivery.repository.UserRepository;
 @Service
 public class CourierAssignmentService {
 
+	private static final Logger log = LoggerFactory.getLogger(CourierAssignmentService.class);
+
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
 	private final NotificationService notificationService;
+	private final AsyncEventPublisher asyncEventPublisher;
 	private final Clock clock;
 
 	public CourierAssignmentService(
 			OrderRepository orderRepository,
 			UserRepository userRepository,
 			NotificationService notificationService,
+			AsyncEventPublisher asyncEventPublisher,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.notificationService = notificationService;
+		this.asyncEventPublisher = asyncEventPublisher;
 		this.clock = clock;
 	}
 
@@ -71,6 +79,7 @@ public class CourierAssignmentService {
 		orderRepository.save(order);
 		userRepository.save(courier);
 
+		// Send notifications synchronously
 		notificationService.createNotification(
 				courier,
 				order,
@@ -89,5 +98,10 @@ public class CourierAssignmentService {
 				NotificationType.COURIER_ASSIGNED,
 				"Courier assigned to order " + order.getId()
 		);
+
+		// Publish async event for external system integration
+		asyncEventPublisher.courierAssigned(order);
+
+		log.info("Courier {} assigned to order {}", courier.getId(), order.getId());
 	}
 }

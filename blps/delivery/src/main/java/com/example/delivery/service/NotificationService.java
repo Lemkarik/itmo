@@ -3,6 +3,8 @@ package com.example.delivery.service;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.delivery.dto.NotificationResponse;
 import com.example.delivery.dto.PaginationRequest;
 import com.example.delivery.exception.NotFoundException;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.Notification;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
@@ -19,18 +22,45 @@ import com.example.delivery.repository.NotificationRepository;
 @Service
 public class NotificationService {
 
+	private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
+
 	private final NotificationRepository notificationRepository;
 	private final Clock clock;
+	private final MessageProducerService messageProducer;
 
-	public NotificationService(NotificationRepository notificationRepository, Clock clock) {
+	public NotificationService(
+			NotificationRepository notificationRepository,
+			Clock clock,
+			MessageProducerService messageProducer) {
 		this.notificationRepository = notificationRepository;
 		this.clock = clock;
+		this.messageProducer = messageProducer;
 	}
 
+	/**
+	 * Creates a notification synchronously (direct DB write).
+	 * Also sends an async message to the notification.dispatch queue
+	 * for redundant delivery via other consumers.
+	 */
 	@Transactional
 	public Notification createNotification(User recipient, Order order, NotificationType type, String message) {
 		Notification notification = new Notification(recipient, order, type, message);
-		return notificationRepository.save(notification);
+		Notification saved = notificationRepository.save(notification);
+
+		// Also send asynchronously via JMS queue for reliability
+		try {
+			messageProducer.sendNotificationDispatch(
+					recipient.getId(),
+					order != null ? order.getId() : null,
+					type.name(),
+					message
+			);
+		} catch (Exception e) {
+			log.warn("Failed to send async notification for user {}: {}",
+					recipient.getId(), e.getMessage());
+		}
+
+		return saved;
 	}
 
 	@Transactional(readOnly = true)
