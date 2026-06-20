@@ -63,7 +63,7 @@ public class ShopService {
 		order.setAcceptedAt(now);
 		Order saved = orderRepository.save(order);
 
-		// Send notification synchronously for immediate feedback
+		
 		notificationService.createNotification(
 				order.getCustomer(),
 				saved,
@@ -71,11 +71,11 @@ public class ShopService {
 				"Shop accepted order " + saved.getId()
 		);
 
-		// Try direct courier assignment first
+		
 		boolean assigned = courierAssignmentService.tryAssignCourier(saved);
 
-		// Always publish async event for courier assignment queue
-		// so other nodes can also attempt assignment if needed
+		
+		
 		asyncEventPublisher.orderAccepted(saved);
 
 		log.info("Order {} accepted by shop. Courier assigned directly: {}",
@@ -117,7 +117,7 @@ public class ShopService {
 				"Order " + saved.getId() + " declined." + reason
 		);
 
-		// Publish async event for external systems
+		
 		asyncEventPublisher.orderDeclined(saved);
 
 		return saved;

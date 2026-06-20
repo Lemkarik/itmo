@@ -20,12 +20,7 @@ import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.NotificationService;
 
-/**
- * Quartz Job that handles order timeouts when the shop does not respond
- * within the configured timeout period (10 minutes).
- * This replaces the previous @Scheduled method and allows
- * distributed execution across cluster nodes.
- */
+
 @Component
 public class ShopTimeoutJob implements Job {
 
@@ -79,7 +74,7 @@ public class ShopTimeoutJob implements Job {
     @Transactional
     protected void processTimeout(Order order, OffsetDateTime now) {
         if (order.getStatus() != OrderStatus.PENDING_SHOP) {
-            return; // Status changed since query (race condition guard)
+            return; 
         }
 
         order.setStatus(OrderStatus.DECLINED_BY_SHOP);

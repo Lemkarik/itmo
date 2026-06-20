@@ -17,11 +17,7 @@ import com.example.delivery.repository.NotificationRepository;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.repository.UserRepository;
 
-/**
- * JMS listener for asynchronous notification dispatch.
- * Processes messages from the "notification.dispatch" queue.
- * Allows distributing notification delivery across consumer nodes.
- */
+
 @Component
 public class NotificationDispatchListener {
 
@@ -61,7 +57,7 @@ public class NotificationDispatchListener {
                 order = orderRepository.findById(message.getOrderId()).orElse(null);
             }
 
-            // Infer notification type from message content
+            
             NotificationType type = inferNotificationType(message.getMessage());
 
             Notification notification = new Notification(recipient, order, type, message.getMessage());

@@ -10,26 +10,13 @@ import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
 import com.example.delivery.scheduler.CourierTimeoutJob;
 import com.example.delivery.scheduler.ShopTimeoutJob;
 
-/**
- * Configuration for Quartz Scheduler.
- * Defines jobs and triggers for periodic tasks:
- * 
- * 1. ShopTimeoutJob  - runs every 60 seconds, checks for shop decision timeouts
- * 2. CourierTimeoutJob - runs every 60 seconds (with initial delay),
- *    checks for courier assignment timeouts and retries assignments
- * 
- * The scheduler itself is auto-configured by Spring Boot's
- * QuartzAutoConfiguration using the JDBC-backed job store
- * for cluster-safe execution.
- */
+
 @Configuration
 public class QuartzConfig {
 
     private static final long ONE_MINUTE_MS = 60_000L;
 
-    /**
-     * JobDetail for ShopTimeoutJob.
-     */
+    
     @Bean
     public JobDetailFactoryBean shopTimeoutJobDetail() {
         JobDetailFactoryBean factory = new JobDetailFactoryBean();
@@ -41,9 +28,7 @@ public class QuartzConfig {
         return factory;
     }
 
-    /**
-     * Trigger for ShopTimeoutJob - runs every 60 seconds.
-     */
+    
     @Bean
     public SimpleTriggerFactoryBean shopTimeoutTrigger(JobDetail shopTimeoutJobDetail) {
         SimpleTriggerFactoryBean factory = new SimpleTriggerFactoryBean();
@@ -56,9 +41,7 @@ public class QuartzConfig {
         return factory;
     }
 
-    /**
-     * JobDetail for CourierTimeoutJob.
-     */
+    
     @Bean
     public JobDetailFactoryBean courierTimeoutJobDetail() {
         JobDetailFactoryBean factory = new JobDetailFactoryBean();
@@ -70,9 +53,7 @@ public class QuartzConfig {
         return factory;
     }
 
-    /**
-     * Trigger for CourierTimeoutJob - runs every 60 seconds with 15 second delay.
-     */
+    
     @Bean
     public SimpleTriggerFactoryBean courierTimeoutTrigger(JobDetail courierTimeoutJobDetail) {
         SimpleTriggerFactoryBean factory = new SimpleTriggerFactoryBean();

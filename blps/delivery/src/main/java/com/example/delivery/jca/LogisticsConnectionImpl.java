@@ -3,11 +3,7 @@ package com.example.delivery.jca;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Implementation of LogisticsConnection.
- * In a real system, this would communicate with an actual
- * logistics provider API. Here we simulate the interaction.
- */
+
 public class LogisticsConnectionImpl implements LogisticsConnection {
 
     private static final Logger log = LoggerFactory.getLogger(LogisticsConnectionImpl.class);
@@ -26,10 +22,10 @@ public class LogisticsConnectionImpl implements LogisticsConnection {
         log.info("Submitting order to logistics EIS via JCA: {}", orderData);
 
         try {
-            // Simulate network call to external logistics provider
+            
             Thread.sleep(150);
 
-            // Generate a mock tracking ID
+            
             String trackingId = "TRK-" + System.currentTimeMillis() + "-" + orderData.hashCode();
             log.info("Order submitted to logistics EIS. Tracking ID: {}", trackingId);
             return trackingId;
@@ -46,7 +42,7 @@ public class LogisticsConnectionImpl implements LogisticsConnection {
         checkClosed();
         log.info("Checking delivery status for tracking ID: {}", trackingId);
 
-        // Simulate status check
+        
         try {
             Thread.sleep(50);
         } catch (InterruptedException e) {
@@ -82,22 +78,22 @@ public class LogisticsConnectionImpl implements LogisticsConnection {
 
     @Override
     public jakarta.resource.cci.ResultSetInfo getResultSetInfo() {
-        return null; // Not applicable for this resource adapter
+        return null; 
     }
 
     @Override
     public jakarta.resource.cci.ConnectionMetaData getMetaData() {
-        return null; // Not applicable for this resource adapter
+        return null; 
     }
 
     @Override
     public jakarta.resource.cci.LocalTransaction getLocalTransaction() {
-        return null; // Not applicable for this resource adapter
+        return null; 
     }
 
     @Override
     public jakarta.resource.cci.Interaction createInteraction() {
-        return null; // Not applicable for this resource adapter
+        return null; 
     }
 
     private void checkClosed() throws LogisticsException {

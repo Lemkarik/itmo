@@ -11,18 +11,7 @@ import com.example.delivery.model.OrderStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Service that integrates with the external Logistics EIS
- * via the JCA (Jakarta Connectors) resource adapter.
- * 
- * This service uses the LogisticsConnectionFactory to obtain
- * connections to the external logistics system and submit
- * orders for delivery processing.
- * 
- * In a full JCA deployment, the connection factory would be
- * obtained via JNDI lookup. Here we create it directly for
- * demonstration purposes.
- */
+
 @Service
 public class LogisticsEISService {
 
@@ -41,14 +30,7 @@ public class LogisticsEISService {
         this.clock = clock;
     }
 
-    /**
-     * Submit an order to the external logistics system via JCA.
-     * 
-     * @param order     the order to submit
-     * @param eventType the type of event (e.g., "ORDER_CREATED", "ORDER_ACCEPTED")
-     * @return tracking ID from the logistics system
-     * @throws LogisticsException if submission fails
-     */
+    
     public String submitOrderToLogistics(Order order, String eventType)
             throws LogisticsException {
         LogisticsConnection connection = null;
@@ -56,7 +38,7 @@ public class LogisticsEISService {
             jakarta.resource.cci.Connection cciConnection = connectionFactory.getConnection();
             connection = (LogisticsConnection) cciConnection;
 
-            // Build order data as JSON
+            
             String orderData = buildOrderPayload(order, eventType);
             String trackingId = connection.submitOrder(orderData);
 
@@ -87,9 +69,7 @@ public class LogisticsEISService {
         }
     }
 
-    /**
-     * Check delivery status for a tracking ID.
-     */
+    
     public String checkDeliveryStatus(String trackingId) throws LogisticsException {
         LogisticsConnection connection = null;
         try {
@@ -113,9 +93,7 @@ public class LogisticsEISService {
         }
     }
 
-    /**
-     * Cancel an order in the logistics system.
-     */
+    
     public boolean cancelDelivery(String trackingId) throws LogisticsException {
         LogisticsConnection connection = null;
         try {

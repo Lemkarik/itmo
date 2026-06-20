@@ -5,12 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
-/**
- * JMS listener for external logistics system integration.
- * Processes messages from the "external.logistics" queue.
- * This simulates integration with an external information system
- * (e.g., a logistics provider API).
- */
+
 @Component
 public class ExternalLogisticsListener {
 
@@ -26,10 +21,10 @@ public class ExternalLogisticsListener {
         log.info("Delivery address: {}", message.getDeliveryAddress());
         log.info("Event time: {}", message.getEventTime());
 
-        // Simulate sending data to an external logistics provider
-        // In a real system, this would call a third-party API
+        
+        
         try {
-            // Simulate network delay for external API call
+            
             Thread.sleep(100);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

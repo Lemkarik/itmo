@@ -79,7 +79,7 @@ public class CourierAssignmentService {
 		orderRepository.save(order);
 		userRepository.save(courier);
 
-		// Send notifications synchronously
+		
 		notificationService.createNotification(
 				courier,
 				order,
@@ -99,7 +99,7 @@ public class CourierAssignmentService {
 				"Courier assigned to order " + order.getId()
 		);
 
-		// Publish async event for external system integration
+		
 		asyncEventPublisher.courierAssigned(order);
 
 		log.info("Courier {} assigned to order {}", courier.getId(), order.getId());

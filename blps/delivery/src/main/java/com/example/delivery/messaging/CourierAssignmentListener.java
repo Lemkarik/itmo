@@ -11,12 +11,7 @@ import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.CourierAssignmentService;
 
-/**
- * JMS listener for asynchronous courier assignment.
- * Processes messages from the "courier.assignment" queue.
- * This allows the courier assignment logic to be distributed
- * across multiple consumer nodes.
- */
+
 @Component
 public class CourierAssignmentListener {
 

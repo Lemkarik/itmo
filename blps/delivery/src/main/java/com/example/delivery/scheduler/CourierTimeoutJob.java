@@ -22,14 +22,7 @@ import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.CourierAssignmentService;
 import com.example.delivery.service.NotificationService;
 
-/**
- * Quartz Job that handles courier assignment timeouts.
- * It first retries courier assignment for all waiting orders,
- * then cancels orders that have been waiting too long (10 minutes).
- * 
- * @DisallowConcurrentExecution prevents multiple instances of this job
- * from running simultaneously on the same node.
- */
+
 @Component
 @DisallowConcurrentExecution
 public class CourierTimeoutJob implements Job {
@@ -63,10 +56,10 @@ public class CourierTimeoutJob implements Job {
         log.info("CourierTimeoutJob triggered at {}", OffsetDateTime.now(clock));
 
         try {
-            // First retry courier assignments for all waiting orders
+            
             retryCourierAssignments();
 
-            // Then cancel orders that have been waiting too long
+            
             OffsetDateTime now = OffsetDateTime.now(clock);
             OffsetDateTime threshold = now.minus(COURIER_ASSIGNMENT_TIMEOUT);
             List<Order> overdue = orderRepository.findByStatusAndAcceptedAtBefore(
@@ -91,7 +84,7 @@ public class CourierTimeoutJob implements Job {
     @Transactional
     protected void processTimeout(Order order, OffsetDateTime now) {
         if (order.getStatus() != OrderStatus.ACCEPTED_WAITING_COURIER) {
-            return; // Status changed since query
+            return; 
         }
 
         order.setStatus(OrderStatus.CANCELLED_NO_COURIER);

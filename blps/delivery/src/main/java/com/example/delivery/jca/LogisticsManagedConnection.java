@@ -15,11 +15,7 @@ import jakarta.resource.spi.ManagedConnection;
 import jakarta.resource.spi.ManagedConnectionMetaData;
 import javax.security.auth.Subject;
 
-/**
- * JCA ManagedConnection for the Logistics EIS.
- * Manages the physical connection to the external logistics system
- * and handles connection pooling lifecycle.
- */
+
 public class LogisticsManagedConnection implements ManagedConnection {
 
     private static final Logger log = LoggerFactory.getLogger(LogisticsManagedConnection.class);
@@ -48,7 +44,7 @@ public class LogisticsManagedConnection implements ManagedConnection {
 
     @Override
     public void cleanup() throws ResourceException {
-        // Cleanup any temporary state
+        
         log.debug("LogisticsManagedConnection cleaned up");
     }
 
@@ -71,13 +67,13 @@ public class LogisticsManagedConnection implements ManagedConnection {
 
     @Override
     public LocalTransaction getLocalTransaction() throws ResourceException {
-        // This resource adapter does not support local transactions
+        
         return null;
     }
 
     @Override
     public javax.transaction.xa.XAResource getXAResource() throws ResourceException {
-        // This resource adapter does not support XA transactions directly
+        
         return null;
     }
 
@@ -108,7 +104,7 @@ public class LogisticsManagedConnection implements ManagedConnection {
 
     @Override
     public void setLogWriter(java.io.PrintWriter out) throws ResourceException {
-        // Not implemented - use SLF4J
+        
     }
 
     @Override
@@ -116,10 +112,7 @@ public class LogisticsManagedConnection implements ManagedConnection {
         return null;
     }
 
-    /**
-     * Called by the connection implementation when it is closed.
-     * Notifies the connection pool that the connection can be reused.
-     */
+    
     public void connectionClosed(LogisticsConnectionImpl closedConnection) {
         ConnectionEvent event = new ConnectionEvent(
                 this, ConnectionEvent.CONNECTION_CLOSED);

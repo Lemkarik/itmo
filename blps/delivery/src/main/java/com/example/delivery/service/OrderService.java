@@ -99,7 +99,7 @@ public class OrderService {
 		Order saved = orderRepository.save(order);
 		cartService.clearCart(cart);
 
-		// Send notifications synchronously
+		
 		notificationService.createNotification(
 				shop,
 				saved,
@@ -113,7 +113,7 @@ public class OrderService {
 				"Order " + saved.getId() + " created and sent to shop"
 		);
 
-		// Publish async event for external system integration
+		
 		asyncEventPublisher.orderCreated(saved);
 
 		log.info("Order {} created by customer {}", saved.getId(), customerId);

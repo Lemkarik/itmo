@@ -4,11 +4,7 @@ import java.time.OffsetDateTime;
 
 import com.example.delivery.model.OrderStatus;
 
-/**
- * Message sent to queues when an order event occurs.
- * Used for async courier assignment, notification dispatch,
- * and external logistics integration.
- */
+
 public class OrderEventMessage {
 
     private Long orderId;

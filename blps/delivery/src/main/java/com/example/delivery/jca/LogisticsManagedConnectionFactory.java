@@ -15,11 +15,7 @@ import jakarta.resource.spi.ResourceAdapter;
 import jakarta.resource.spi.ResourceAdapterAssociation;
 import javax.security.auth.Subject;
 
-/**
- * JCA ManagedConnectionFactory for the Logistics EIS.
- * Creates ManagedConnection instances for the connection pool.
- * This is the main entry point for the resource adapter.
- */
+
 public class LogisticsManagedConnectionFactory
         implements ManagedConnectionFactory, ResourceAdapterAssociation {
 
@@ -90,7 +86,7 @@ public class LogisticsManagedConnectionFactory
         this.resourceAdapter = resourceAdapter;
     }
 
-    // Configuration properties for the resource adapter
+    
 
     public String getLogisticsEndpointUrl() {
         return logisticsEndpointUrl;

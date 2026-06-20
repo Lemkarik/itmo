@@ -31,13 +31,11 @@ public class ArtemisConfig {
 
     private EmbeddedActiveMQ embedded;
 
-    /**
-     * Starts the embedded Artemis broker manually, with both in-VM and TCP acceptors.
-     */
+    
     @PostConstruct
     public void startEmbeddedBroker() throws Exception {
         log.info("Starting embedded Artemis broker...");
-        // Disable JMX audit logging to avoid Subject.getSubject() issues on Java 23+
+        
         System.setProperty("org.apache.activemq.audit.enabled", "false");
         ConfigurationImpl config = new ConfigurationImpl();
         config.setPersistenceEnabled(false);
@@ -47,9 +45,9 @@ public class ArtemisConfig {
         config.setLargeMessagesDirectory("target/artemis/large-messages");
         config.setPagingDirectory("target/artemis/paging");
         config.setName("DeliveryArtemisEmbedded");
-        // Add in-VM acceptor for JVM-internal connections
-        // The "0" means any available node ID for this JVM
-        // Disable JMX management to avoid Subject.getSubject() issues on Java 23+
+        
+        
+        
         config.setJMXManagementEnabled(false);
         config.addAcceptorConfiguration("invm", "vm://0");
 
@@ -59,9 +57,7 @@ public class ArtemisConfig {
         log.info("Embedded Artemis broker started successfully with in-VM and TCP acceptors");
     }
 
-    /**
-     * Stops the embedded broker on shutdown.
-     */
+    
     @PreDestroy
     public void stopEmbeddedBroker() throws Exception {
         if (embedded != null) {
@@ -71,10 +67,7 @@ public class ArtemisConfig {
         }
     }
 
-    /**
-     * Creates a ConnectionFactory that connects to the embedded broker via in-VM.
-     * Uses non-XA connection factory to avoid JTA transaction complications.
-     */
+    
     @Bean
     public ConnectionFactory jmsConnectionFactory() {
         ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory("vm://0");
@@ -97,10 +90,7 @@ public class ArtemisConfig {
         return template;
     }
 
-    /**
-     * Creates the JMS listener container factory with session transacted = false
-     * to avoid XA/JTA conflicts. Each message is acknowledged individually.
-     */
+    
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
             ConnectionFactory connectionFactory,
@@ -115,9 +105,7 @@ public class ArtemisConfig {
         return factory;
     }
 
-    /**
-     * Configures Jackson as the message converter for JMS.
-     */
+    
     @Bean
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
@@ -127,9 +115,7 @@ public class ArtemisConfig {
         return converter;
     }
 
-    /**
-     * Configures Jackson ObjectMapper with JSR-310 support.
-     */
+    
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();

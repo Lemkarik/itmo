@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
 
-/**
- * Service responsible for sending messages to ActiveMQ queues.
- * Uses AMQP 1.0 protocol via Artemis embedded broker.
- */
+
 @Service
 public class MessageProducerService {
 
@@ -24,9 +21,7 @@ public class MessageProducerService {
         this.jmsTemplate = jmsTemplate;
     }
 
-    /**
-     * Send a message to trigger courier assignment for an order.
-     */
+    
     public void sendCourierAssignmentRequest(Order order) {
         OrderEventMessage msg = new OrderEventMessage(
                 order.getId(),
@@ -40,9 +35,7 @@ public class MessageProducerService {
         log.info("Sent courier.assignment message for order {}", order.getId());
     }
 
-    /**
-     * Send a notification dispatch request.
-     */
+    
     public void sendNotificationDispatch(Long recipientId, Long orderId,
                                           String type, String message) {
         OrderEventMessage msg = new OrderEventMessage(
@@ -54,9 +47,7 @@ public class MessageProducerService {
                 orderId, recipientId);
     }
 
-    /**
-     * Send an order event to the external logistics system.
-     */
+    
     public void sendOrderEvent(Order order, String eventType) {
         OrderEventMessage msg = new OrderEventMessage(
                 order.getId(),
@@ -73,9 +64,7 @@ public class MessageProducerService {
         log.info("Sent order.event message for order {}: {}", order.getId(), eventType);
     }
 
-    /**
-     * Send an event to the external logistics system integration queue.
-     */
+    
     public void sendExternalLogisticsEvent(Order order, String eventDescription) {
         OrderEventMessage msg = new OrderEventMessage(
                 order.getId(),

@@ -8,11 +8,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
-/**
- * Cleans up stale Quartz data from previous runs.
- * This is needed because old serialized job data may be incompatible
- * with the current Quartz configuration.
- */
+
 @Component
 @DependsOnDatabaseInitialization
 public class QuartzSchemaCleaner {
@@ -46,7 +42,7 @@ public class QuartzSchemaCleaner {
                 jdbcTemplate.update("DELETE FROM " + table);
                 log.debug("Cleared table: {}", table);
             } catch (Exception e) {
-                // Table might not exist yet, which is fine
+                
                 log.debug("Could not clear table {}: {}", table, e.getMessage());
             }
         }

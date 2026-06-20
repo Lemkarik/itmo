@@ -13,13 +13,7 @@ import jakarta.resource.cci.RecordFactory;
 import jakarta.resource.cci.ResourceAdapterMetaData;
 import jakarta.resource.spi.ConnectionManager;
 
-/**
- * JCA ConnectionFactory for the Logistics EIS.
- * This is the client-facing factory that application code uses
- * to obtain connections to the external logistics system.
- * 
- * Implements jakarta.resource.cci.ConnectionFactory for CCI-style access.
- */
+
 public class LogisticsConnectionFactory implements ConnectionFactory {
 
     private static final Logger log = LoggerFactory.getLogger(LogisticsConnectionFactory.class);
@@ -57,7 +51,7 @@ public class LogisticsConnectionFactory implements ConnectionFactory {
 
     @Override
     public RecordFactory getRecordFactory() throws ResourceException {
-        // Not using CCI records - using direct Java interfaces
+        
         return null;
     }
 

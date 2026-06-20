@@ -37,17 +37,13 @@ public class NotificationService {
 		this.messageProducer = messageProducer;
 	}
 
-	/**
-	 * Creates a notification synchronously (direct DB write).
-	 * Also sends an async message to the notification.dispatch queue
-	 * for redundant delivery via other consumers.
-	 */
+	
 	@Transactional
 	public Notification createNotification(User recipient, Order order, NotificationType type, String message) {
 		Notification notification = new Notification(recipient, order, type, message);
 		Notification saved = notificationRepository.save(notification);
 
-		// Also send asynchronously via JMS queue for reliability
+		
 		try {
 			messageProducer.sendNotificationDispatch(
 					recipient.getId(),
