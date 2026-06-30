@@ -1,5 +1,6 @@
 package com.example.delivery.controller;
 
+import com.example.delivery.config.JwtUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,9 +27,10 @@ public class OrderController {
 		this.orderService = orderService;
 	}
 
-	@PostMapping("/customers/{customerId}/orders")
-	@PreAuthorize("hasAuthority('PRIVILEGE_CREATE_ORDER') and @authSecurity.isCurrentUser(#customerId)")
-	public OrderResponse createOrder(@PathVariable Long customerId, @RequestBody CreateOrderRequest request) {
+	@PostMapping("/orders")
+	@PreAuthorize("hasAuthority('PRIVILEGE_CREATE_ORDER')")
+	public OrderResponse createOrder(@RequestBody CreateOrderRequest request) {
+		Long customerId = getCurrentUserId();
 		return orderService.createOrder(customerId, request);
 	}
 
@@ -38,13 +40,13 @@ public class OrderController {
 		return orderService.getOrder(orderId);
 	}
 
-	@GetMapping("/customers/{customerId}/orders")
-	@PreAuthorize("hasAuthority('PRIVILEGE_VIEW_OWN_ORDERS') and @authSecurity.isCurrentUser(#customerId)")
-	public ListResponse<OrderResponse> listCustomerOrders(
-			@PathVariable Long customerId,
+	@GetMapping("/my/orders")
+	@PreAuthorize("hasAuthority('PRIVILEGE_VIEW_OWN_ORDERS')")
+	public ListResponse<OrderResponse> listMyOrders(
 			@RequestParam(name = "page", defaultValue = PaginationRequest.DEFAULT_PAGE_VALUE) int page,
 			@RequestParam(name = "pageSize", defaultValue = PaginationRequest.DEFAULT_PAGE_SIZE_VALUE) int pageSize
 	) {
+		Long customerId = getCurrentUserId();
 		return new ListResponse<>(orderService.listOrdersByCustomer(customerId, new PaginationRequest(page, pageSize)));
 	}
 
@@ -58,13 +60,18 @@ public class OrderController {
 		return new ListResponse<>(orderService.listOrdersByShop(status, new PaginationRequest(page, pageSize)));
 	}
 
-	@GetMapping("/couriers/{courierId}/orders")
-	@PreAuthorize("hasAuthority('PRIVILEGE_VIEW_OWN_ORDERS') and @authSecurity.isCurrentUser(#courierId)")
-	public ListResponse<OrderResponse> listCourierOrders(
-			@PathVariable Long courierId,
+	@GetMapping("/my/courier/orders")
+	@PreAuthorize("hasAuthority('PRIVILEGE_VIEW_OWN_ORDERS')")
+	public ListResponse<OrderResponse> listMyCourierOrders(
 			@RequestParam(name = "page", defaultValue = PaginationRequest.DEFAULT_PAGE_VALUE) int page,
 			@RequestParam(name = "pageSize", defaultValue = PaginationRequest.DEFAULT_PAGE_SIZE_VALUE) int pageSize
 	) {
+		Long courierId = getCurrentUserId();
 		return new ListResponse<>(orderService.listOrdersByCourier(courierId, new PaginationRequest(page, pageSize)));
+	}
+
+	private Long getCurrentUserId() {
+		return ((JwtUserDetails) org.springframework.security.core.context.SecurityContextHolder
+				.getContext().getAuthentication().getPrincipal()).getUserId();
 	}
 }

@@ -1,15 +1,16 @@
 package com.example.delivery.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.delivery.config.JwtUserDetails;
 import com.example.delivery.dto.CreateUserRequest;
 import com.example.delivery.dto.ListResponse;
 import com.example.delivery.dto.PaginationRequest;
@@ -44,12 +45,13 @@ public class UserController {
 		return new ListResponse<>(userService.listUsers(role, new PaginationRequest(page, pageSize)));
 	}
 
-	@PatchMapping("/couriers/{courierId}/availability")
-	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_COURIER_AVAILABILITY') and @authSecurity.isCurrentUser(#courierId)")
+	@PatchMapping("/me/availability")
+	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_COURIER_AVAILABILITY')")
 	public UserResponse updateCourierAvailability(
-			@PathVariable Long courierId,
 			@RequestBody UpdateCourierAvailabilityRequest request
 	) {
+		Long courierId = ((JwtUserDetails) SecurityContextHolder
+				.getContext().getAuthentication().getPrincipal()).getUserId();
 		return userService.updateCourierAvailability(courierId, request);
 	}
 }
