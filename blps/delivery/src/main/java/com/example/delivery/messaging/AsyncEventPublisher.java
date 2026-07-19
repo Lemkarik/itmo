@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.delivery.jca.LogisticsEISService;
 import com.example.delivery.jca.LogisticsException;
 import com.example.delivery.model.Order;
-import com.example.delivery.model.OrderStatus;
 
 
 @Service
@@ -29,9 +28,6 @@ public class AsyncEventPublisher {
     
     @Transactional
     public void orderCreated(Order order) {
-        messageProducer.sendOrderEvent(order, "ORDER_CREATED");
-        
-        
         submitToLogistics(order, "ORDER_CREATED");
     }
 
@@ -39,7 +35,6 @@ public class AsyncEventPublisher {
     @Transactional
     public void orderAccepted(Order order) {
         messageProducer.sendCourierAssignmentRequest(order);
-        messageProducer.sendOrderEvent(order, "ORDER_ACCEPTED");
         
         submitToLogistics(order, "ORDER_ACCEPTED");
     }
@@ -47,56 +42,36 @@ public class AsyncEventPublisher {
     
     @Transactional
     public void orderDeclined(Order order) {
-        messageProducer.sendOrderEvent(order, "ORDER_DECLINED");
-        
         submitToLogistics(order, "ORDER_DECLINED");
     }
 
     
     @Transactional
     public void courierAssigned(Order order) {
-        messageProducer.sendOrderEvent(order, "COURIER_ASSIGNED");
-
-        
-        messageProducer.sendNotificationDispatch(
-                order.getCustomer().getId(), order.getId(),
-                "COURIER_ASSIGNED",
-                "Courier assigned to order " + order.getId()
-        );
-        if (order.getCourier() != null) {
-            messageProducer.sendNotificationDispatch(
-                    order.getCourier().getId(), order.getId(),
-                    "COURIER_ASSIGNED",
-                    "You have been assigned to order " + order.getId()
-            );
-        }
-        messageProducer.sendNotificationDispatch(
-                order.getShop().getId(), order.getId(),
-                "COURIER_ASSIGNED",
-                "Courier assigned to order " + order.getId()
-        );
-        
         submitToLogistics(order, "COURIER_ASSIGNED");
     }
 
     
     @Transactional
     public void orderTimedOut(Order order) {
-        messageProducer.sendOrderEvent(order, "ORDER_TIMEOUT");
-        
         submitToLogistics(order, "ORDER_TIMEOUT");
     }
 
     
     @Transactional
     public void courierNotFound(Order order) {
-        messageProducer.sendOrderEvent(order, "COURIER_NOT_FOUND");
-        
         submitToLogistics(order, "COURIER_NOT_FOUND");
     }
 
     
     private void submitToLogistics(Order order, String eventType) {
+        try {
+            messageProducer.sendExternalLogisticsEvent(order, eventType);
+        } catch (Exception e) {
+            log.warn("Failed to enqueue external.logistics event for order {}: {}",
+                    order.getId(), e.getMessage());
+        }
+
         try {
             String trackingId = logisticsEISService.submitOrderToLogistics(order, eventType);
             log.info("Order {} submitted to logistics EIS via JCA. Tracking: {}",

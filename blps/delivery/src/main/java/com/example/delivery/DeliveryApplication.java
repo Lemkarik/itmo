@@ -17,10 +17,7 @@ import org.springframework.context.annotation.Bean;
 public class DeliveryApplication {
 
 	public static void main(String[] args) {
-		System.out.println(System.getProperty("java.version"));
-		SpringApplication app = new SpringApplication(DeliveryApplication.class);
-		app.setWebApplicationType(org.springframework.boot.WebApplicationType.SERVLET);
-		app.run(args);
+		SpringApplication.run(DeliveryApplication.class, args);
 	}
 
 	@Bean
@@ -28,4 +25,3 @@ public class DeliveryApplication {
 		return Clock.systemUTC();
 	}
 }
-

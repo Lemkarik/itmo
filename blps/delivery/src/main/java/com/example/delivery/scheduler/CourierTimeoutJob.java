@@ -15,11 +15,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.delivery.messaging.AsyncEventPublisher;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
-import com.example.delivery.service.CourierAssignmentService;
 import com.example.delivery.service.NotificationService;
 
 
@@ -33,19 +33,19 @@ public class CourierTimeoutJob implements Job {
 
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
-    private final CourierAssignmentService courierAssignmentService;
+    private final MessageProducerService messageProducerService;
     private final AsyncEventPublisher asyncEventPublisher;
     private final Clock clock;
 
     public CourierTimeoutJob(
             OrderRepository orderRepository,
             NotificationService notificationService,
-            CourierAssignmentService courierAssignmentService,
+            MessageProducerService messageProducerService,
             AsyncEventPublisher asyncEventPublisher,
             Clock clock) {
         this.orderRepository = orderRepository;
         this.notificationService = notificationService;
-        this.courierAssignmentService = courierAssignmentService;
+        this.messageProducerService = messageProducerService;
         this.asyncEventPublisher = asyncEventPublisher;
         this.clock = clock;
     }
@@ -114,10 +114,7 @@ public class CourierTimeoutJob implements Job {
         List<Order> waitingOrders = orderRepository.findByStatusOrderByCreatedAtAsc(
                 OrderStatus.ACCEPTED_WAITING_COURIER);
         for (Order order : waitingOrders) {
-            boolean assigned = courierAssignmentService.tryAssignCourier(order);
-            if (assigned) {
-                log.info("Courier assigned to order {} during retry", order.getId());
-            }
+            messageProducerService.sendCourierAssignmentRequest(order);
         }
     }
 }

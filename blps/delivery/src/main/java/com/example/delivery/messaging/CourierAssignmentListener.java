@@ -2,6 +2,7 @@ package com.example.delivery.messaging;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import com.example.delivery.service.CourierAssignmentService;
 
 
 @Component
+@ConditionalOnProperty(name = "app.features.listener.courier-assignment", havingValue = "true", matchIfMissing = true)
 public class CourierAssignmentListener {
 
     private static final Logger log = LoggerFactory.getLogger(CourierAssignmentListener.class);

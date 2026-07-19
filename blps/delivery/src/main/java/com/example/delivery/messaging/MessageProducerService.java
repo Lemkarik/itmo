@@ -48,23 +48,6 @@ public class MessageProducerService {
     }
 
     
-    public void sendOrderEvent(Order order, String eventType) {
-        OrderEventMessage msg = new OrderEventMessage(
-                order.getId(),
-                order.getCustomer().getId(),
-                order.getShop().getId(),
-                order.getStatus(),
-                order.getDeliveryAddress(),
-                eventType + " for order " + order.getId()
-        );
-        if (order.getCourier() != null) {
-            msg.setCourierId(order.getCourier().getId());
-        }
-        jmsTemplate.convertAndSend("order.event", msg);
-        log.info("Sent order.event message for order {}: {}", order.getId(), eventType);
-    }
-
-    
     public void sendExternalLogisticsEvent(Order order, String eventDescription) {
         OrderEventMessage msg = new OrderEventMessage(
                 order.getId(),

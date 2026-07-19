@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import com.example.delivery.repository.UserRepository;
 
 
 @Component
+@ConditionalOnProperty(name = "app.features.listener.notification-dispatch", havingValue = "true", matchIfMissing = true)
 public class NotificationDispatchListener {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationDispatchListener.class);

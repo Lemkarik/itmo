@@ -39,9 +39,9 @@ public class NotificationService {
 
 	
 	@Transactional
-	public Notification createNotification(User recipient, Order order, NotificationType type, String message) {
-		Notification notification = new Notification(recipient, order, type, message);
-		Notification saved = notificationRepository.save(notification);
+	public void createNotification(User recipient, Order order, NotificationType type, String message) {
+		// Notification notification = new Notification(recipient, order, type, message);
+		// Notification saved = notificationRepository.save(notification);
 
 		
 		try {
@@ -56,7 +56,7 @@ public class NotificationService {
 					recipient.getId(), e.getMessage());
 		}
 
-		return saved;
+		// return saved;
 	}
 
 	@Transactional(readOnly = true)

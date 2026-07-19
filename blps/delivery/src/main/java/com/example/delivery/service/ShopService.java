@@ -27,7 +27,6 @@ public class ShopService {
 	private final OrderRepository orderRepository;
 	private final UserService userService;
 	private final NotificationService notificationService;
-	private final CourierAssignmentService courierAssignmentService;
 	private final AsyncEventPublisher asyncEventPublisher;
 	private final Clock clock;
 
@@ -35,14 +34,12 @@ public class ShopService {
 			OrderRepository orderRepository,
 			UserService userService,
 			NotificationService notificationService,
-			CourierAssignmentService courierAssignmentService,
 			AsyncEventPublisher asyncEventPublisher,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userService = userService;
 		this.notificationService = notificationService;
-		this.courierAssignmentService = courierAssignmentService;
 		this.asyncEventPublisher = asyncEventPublisher;
 		this.clock = clock;
 	}
@@ -72,14 +69,10 @@ public class ShopService {
 		);
 
 		
-		boolean assigned = courierAssignmentService.tryAssignCourier(saved);
-
-		
-		
 		asyncEventPublisher.orderAccepted(saved);
 
-		log.info("Order {} accepted by shop. Courier assigned directly: {}",
-				orderId, assigned);
+		log.info("Order {} accepted by shop. Courier assignment scheduled asynchronously",
+				orderId);
 
 		return saved;
 	}

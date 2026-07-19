@@ -12,27 +12,27 @@
         <username>alice</username>
         <password>password</password>
         <role>CUSTOMER</role>
-        <userId>2</userId>
+        <userId>1</userId>
     </user>
     <user>
         <username>bob</username>
         <password>password</password>
         <role>CUSTOMER</role>
-        <userId>11</userId>
+        <userId>2</userId>
     </user>
     <!-- Shop user -->
     <user>
         <username>shop</username>
         <password>shop123</password>
         <role>SHOP</role>
-        <userId>1</userId>
+        <userId>3</userId>
     </user>
     <!-- Courier users -->
     <user>
         <username>courier1</username>
         <password>courier123</password>
         <role>COURIER</role>
-        <userId>3</userId>
+        <userId>4</userId>
     </user>
     <user>
         <username>courier2</username>
