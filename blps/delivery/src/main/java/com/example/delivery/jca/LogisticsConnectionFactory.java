@@ -65,7 +65,7 @@ public class LogisticsConnectionFactory implements ConnectionFactory {
 
             @Override
             public String getAdapterName() {
-                return "LogisticsEISAdapter";
+                return "YandexMapsEISAdapter";
             }
 
             @Override
@@ -75,7 +75,7 @@ public class LogisticsConnectionFactory implements ConnectionFactory {
 
             @Override
             public String getAdapterShortDescription() {
-                return "JCA Resource Adapter for External Logistics EIS";
+                return "JCA Resource Adapter for Yandex Maps Geocoder API";
             }
 
             @Override

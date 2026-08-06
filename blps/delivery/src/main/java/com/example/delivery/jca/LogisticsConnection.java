@@ -13,4 +13,7 @@ public interface LogisticsConnection extends Connection {
 
     
     boolean cancelDelivery(String trackingId) throws LogisticsException;
+
+    
+    Double calculateDistanceKm(String fromAddress, String toAddress) throws LogisticsException;
 }

@@ -37,6 +37,7 @@ public class OrderService {
 	private final CartService cartService;
 	private final NotificationService notificationService;
 	private final AsyncEventPublisher asyncEventPublisher;
+	private final DeliveryEstimationService deliveryEstimationService;
 	private final Clock clock;
 
 	public OrderService(
@@ -45,6 +46,7 @@ public class OrderService {
 			CartService cartService,
 			NotificationService notificationService,
 			AsyncEventPublisher asyncEventPublisher,
+			DeliveryEstimationService deliveryEstimationService,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
@@ -52,6 +54,7 @@ public class OrderService {
 		this.cartService = cartService;
 		this.notificationService = notificationService;
 		this.asyncEventPublisher = asyncEventPublisher;
+		this.deliveryEstimationService = deliveryEstimationService;
 		this.clock = clock;
 	}
 
@@ -82,6 +85,13 @@ public class OrderService {
 		order.setCreatedAt(now);
 		order.setUpdatedAt(now);
 
+		DeliveryEstimationService.DeliveryTimeDecision deliveryDecision =
+				deliveryEstimationService.decideDeliveryTime(
+						now,
+						request.getDeliveryTime(),
+						order.getDeliveryAddress());
+		order.setDeliveryTime(deliveryDecision.chosen());
+
 		for (CartItem cartItem : cart.getItems()) {
 			if (!cartItem.getShopItem().getShop().getId().equals(shop.getId())) {
 				throw new BadRequestException("Cart contains items from an unexpected shop");
@@ -111,6 +121,12 @@ public class OrderService {
 				saved,
 				NotificationType.ORDER_CREATED,
 				"Order " + saved.getId() + " created and sent to shop"
+						+ (saved.getDeliveryTime() != null ? ". Delivery by: " + saved.getDeliveryTime() : "")
+						+ (deliveryDecision.adjustedFromRequested()
+								? " (requested time was too soon and was adjusted)"
+								: (deliveryDecision.estimatedEarliest() != null && request.getDeliveryTime() != null
+										? " (earliest ETA: " + deliveryDecision.estimatedEarliest() + ")"
+										: ""))
 		);
 
 		

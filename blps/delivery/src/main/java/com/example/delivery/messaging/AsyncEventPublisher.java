@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.delivery.jca.LogisticsEISService;
-import com.example.delivery.jca.LogisticsException;
 import com.example.delivery.model.Order;
 
 
@@ -16,13 +14,10 @@ public class AsyncEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(AsyncEventPublisher.class);
 
     private final MessageProducerService messageProducer;
-    private final LogisticsEISService logisticsEISService;
 
     public AsyncEventPublisher(
-            MessageProducerService messageProducer,
-            LogisticsEISService logisticsEISService) {
+            MessageProducerService messageProducer) {
         this.messageProducer = messageProducer;
-        this.logisticsEISService = logisticsEISService;
     }
 
     
@@ -69,15 +64,6 @@ public class AsyncEventPublisher {
             messageProducer.sendExternalLogisticsEvent(order, eventType);
         } catch (Exception e) {
             log.warn("Failed to enqueue external.logistics event for order {}: {}",
-                    order.getId(), e.getMessage());
-        }
-
-        try {
-            String trackingId = logisticsEISService.submitOrderToLogistics(order, eventType);
-            log.info("Order {} submitted to logistics EIS via JCA. Tracking: {}",
-                    order.getId(), trackingId);
-        } catch (LogisticsException e) {
-            log.warn("Failed to submit order {} to logistics EIS (will retry later): {}",
                     order.getId(), e.getMessage());
         }
     }

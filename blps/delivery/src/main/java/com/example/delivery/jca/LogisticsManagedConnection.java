@@ -24,8 +24,13 @@ public class LogisticsManagedConnection implements ManagedConnection {
     private final LogisticsConnectionImpl connection;
     private boolean destroyed = false;
 
-    public LogisticsManagedConnection() {
-        this.connection = new LogisticsConnectionImpl(this);
+    private final String endpointUrl;
+    private final String apiKey;
+
+    public LogisticsManagedConnection(String endpointUrl, String apiKey) {
+        this.endpointUrl = endpointUrl;
+        this.apiKey = apiKey;
+        this.connection = new LogisticsConnectionImpl(this, endpointUrl, apiKey);
         log.debug("LogisticsManagedConnection created");
     }
 
@@ -82,12 +87,12 @@ public class LogisticsManagedConnection implements ManagedConnection {
         return new ManagedConnectionMetaData() {
             @Override
             public String getEISProductName() throws ResourceException {
-                return "External Logistics System Simulator";
+                return "Yandex Maps Geocoder API";
             }
 
             @Override
             public String getEISProductVersion() throws ResourceException {
-                return "1.0";
+                return "v1";
             }
 
             @Override
@@ -97,7 +102,7 @@ public class LogisticsManagedConnection implements ManagedConnection {
 
             @Override
             public String getUserName() throws ResourceException {
-                return "logistics-system";
+                return apiKey != null && !apiKey.isBlank() ? "yandex-api-key" : "anonymous";
             }
         };
     }

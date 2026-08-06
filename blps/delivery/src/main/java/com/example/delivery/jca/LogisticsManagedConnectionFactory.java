@@ -23,8 +23,8 @@ public class LogisticsManagedConnectionFactory
 
     private ResourceAdapter resourceAdapter;
     private PrintWriter logWriter;
-    private String logisticsEndpointUrl = "http://logistics.example.com/api";
-    private String apiKey = "default-api-key";
+    private String logisticsEndpointUrl = "https://geocode-maps.yandex.ru/v1/";
+    private String apiKey = "";
 
     @Override
     public Object createConnectionFactory(ConnectionManager cxManager)
@@ -44,7 +44,7 @@ public class LogisticsManagedConnectionFactory
             Subject subject, ConnectionRequestInfo cxRequestInfo)
             throws ResourceException {
         log.debug("Creating new LogisticsManagedConnection");
-        return new LogisticsManagedConnection();
+        return new LogisticsManagedConnection(logisticsEndpointUrl, apiKey);
     }
 
     @Override
