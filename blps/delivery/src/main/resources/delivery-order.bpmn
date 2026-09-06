@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="DeliveryDefinitions" targetNamespace="http://example.com/delivery" exporter="Camunda Modeler" exporterVersion="5.50.1">
+  <bpmn:message id="CourierAssignedMessage" name="courierAssigned" />
+  <bpmn:process id="delivery-order" name="Delivery order" isExecutable="true" camunda:candidateStarterGroups="CUSTOMER">
+    <bpmn:startEvent id="startShopping" name="Start shopping" camunda:formRef="start-shopping" camunda:formRefBinding="deployment" camunda:initiator="customerUsername">
+      <bpmn:outgoing>Flow_InitializeShopping</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="initializeShopping" name="Load catalog and cart" camunda:delegateExpression="${initializeShoppingDelegate}">
+      <bpmn:incoming>Flow_InitializeShopping</bpmn:incoming>
+      <bpmn:outgoing>Flow_DirectCheckoutGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="directCheckoutGateway" name="REST checkout?" default="Flow_ManageCart">
+      <bpmn:incoming>Flow_DirectCheckoutGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_DirectCheckout</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ManageCart</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="manageCart" name="Manage cart and checkout" camunda:formRef="manage-cart" camunda:formRefBinding="deployment" camunda:assignee="${customerUsername}">
+      <bpmn:incoming>Flow_ManageCart</bpmn:incoming>
+      <bpmn:incoming>Flow_ContinueShopping</bpmn:incoming>
+      <bpmn:outgoing>Flow_ApplyCartAction</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="applyCartAction" name="Apply cart action" camunda:delegateExpression="${applyCartActionDelegate}">
+      <bpmn:incoming>Flow_ApplyCartAction</bpmn:incoming>
+      <bpmn:outgoing>Flow_CartActionGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="cartActionGateway" name="Checkout?" default="Flow_ContinueShopping">
+      <bpmn:incoming>Flow_CartActionGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Checkout</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ContinueShopping</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="createOrder" name="Create order transactionally" camunda:delegateExpression="${createOrderDelegate}">
+      <bpmn:incoming>Flow_DirectCheckout</bpmn:incoming>
+      <bpmn:incoming>Flow_Checkout</bpmn:incoming>
+      <bpmn:outgoing>Flow_ShopDecision</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="shopDecision" name="Shop decision" camunda:formRef="shop-decision" camunda:formRefBinding="deployment" camunda:assignee="${shopUsername}">
+      <bpmn:incoming>Flow_ShopDecision</bpmn:incoming>
+      <bpmn:outgoing>Flow_DecisionGateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="shopDecisionTimeout" name="10 minutes elapsed" attachedToRef="shopDecision">
+      <bpmn:outgoing>Flow_ShopTimeout</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>PT10M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="shopTimedOut" name="Decline after shop timeout" camunda:delegateExpression="${shopTimeoutDelegate}">
+      <bpmn:incoming>Flow_ShopTimeout</bpmn:incoming>
+      <bpmn:outgoing>Flow_ShopTimeoutNotice</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="shopDecisionGateway" name="Accepted?" default="Flow_Declined">
+      <bpmn:incoming>Flow_DecisionGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Accepted</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Declined</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="orderAccepted" name="Accept order" camunda:delegateExpression="${shopAcceptedDelegate}">
+      <bpmn:incoming>Flow_Accepted</bpmn:incoming>
+      <bpmn:outgoing>Flow_DispatchCourierSearch</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="dispatchCourierSearch" name="Request courier through AMQP" camunda:asyncBefore="true" camunda:delegateExpression="${dispatchCourierSearchDelegate}">
+      <bpmn:incoming>Flow_DispatchCourierSearch</bpmn:incoming>
+      <bpmn:outgoing>Flow_WaitCourier</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:eventBasedGateway id="waitCourier" name="Wait for courier">
+      <bpmn:incoming>Flow_WaitCourier</bpmn:incoming>
+      <bpmn:outgoing>Flow_CourierAssigned</bpmn:outgoing>
+      <bpmn:outgoing>Flow_CourierTimeout</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="courierAssigned" name="Courier found">
+      <bpmn:incoming>Flow_CourierAssigned</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotifyCourierAssigned</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="CourierAssignedMessage" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="courierSearchTimeout" name="10 minutes elapsed">
+      <bpmn:incoming>Flow_CourierTimeout</bpmn:incoming>
+      <bpmn:outgoing>Flow_CancelNoCourier</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>PT10M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="courierAssignedNotification" name="Notify courier, shop and customer" camunda:delegateExpression="${courierAssignedDelegate}">
+      <bpmn:incoming>Flow_NotifyCourierAssigned</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotificationSplit</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="notificationSplit" name="Deliver notifications">
+      <bpmn:incoming>Flow_NotificationSplit</bpmn:incoming>
+      <bpmn:outgoing>Flow_CustomerAssignmentNotice</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ShopAssignmentNotice</bpmn:outgoing>
+      <bpmn:outgoing>Flow_CourierAssignmentNotice</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="customerAssignmentNotice" name="Courier assigned — customer notification" camunda:formRef="assignment-notification" camunda:formRefBinding="deployment" camunda:assignee="${customerUsername}">
+      <bpmn:incoming>Flow_CustomerAssignmentNotice</bpmn:incoming>
+      <bpmn:outgoing>Flow_CustomerNoticeDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="shopAssignmentNotice" name="Courier assigned — shop notification" camunda:formRef="assignment-notification" camunda:formRefBinding="deployment" camunda:assignee="${shopUsername}">
+      <bpmn:incoming>Flow_ShopAssignmentNotice</bpmn:incoming>
+      <bpmn:outgoing>Flow_ShopNoticeDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="courierAssignmentNotice" name="New delivery — courier notification" camunda:formRef="assignment-notification" camunda:formRefBinding="deployment" camunda:assignee="${courierUsername}">
+      <bpmn:incoming>Flow_CourierAssignmentNotice</bpmn:incoming>
+      <bpmn:outgoing>Flow_CourierNoticeDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:parallelGateway id="notificationJoin">
+      <bpmn:incoming>Flow_CustomerNoticeDone</bpmn:incoming>
+      <bpmn:incoming>Flow_ShopNoticeDone</bpmn:incoming>
+      <bpmn:incoming>Flow_CourierNoticeDone</bpmn:incoming>
+      <bpmn:outgoing>Flow_EndCourierAssigned</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="endCourierAssigned" name="Courier assigned and notifications delivered">
+      <bpmn:incoming>Flow_EndCourierAssigned</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="courierTimedOut" name="Cancel without courier" camunda:delegateExpression="${courierTimeoutDelegate}">
+      <bpmn:incoming>Flow_CancelNoCourier</bpmn:incoming>
+      <bpmn:outgoing>Flow_CourierTimeoutNotice</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="orderDeclined" name="Decline order" camunda:delegateExpression="${shopDeclinedDelegate}">
+      <bpmn:incoming>Flow_Declined</bpmn:incoming>
+      <bpmn:outgoing>Flow_DeclinedNotice</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="customerResultNotice" name="Order result notification" camunda:formRef="order-result" camunda:formRefBinding="deployment" camunda:assignee="${customerUsername}">
+      <bpmn:incoming>Flow_ShopTimeoutNotice</bpmn:incoming>
+      <bpmn:incoming>Flow_CourierTimeoutNotice</bpmn:incoming>
+      <bpmn:incoming>Flow_DeclinedNotice</bpmn:incoming>
+      <bpmn:outgoing>Flow_EndOrderResult</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="endOrderResult" name="Order closed">
+      <bpmn:incoming>Flow_EndOrderResult</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_InitializeShopping" sourceRef="startShopping" targetRef="initializeShopping" />
+    <bpmn:sequenceFlow id="Flow_DirectCheckoutGateway" sourceRef="initializeShopping" targetRef="directCheckoutGateway" />
+    <bpmn:sequenceFlow id="Flow_DirectCheckout" sourceRef="directCheckoutGateway" targetRef="createOrder">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${directCheckout == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_ManageCart" sourceRef="directCheckoutGateway" targetRef="manageCart" />
+    <bpmn:sequenceFlow id="Flow_ApplyCartAction" sourceRef="manageCart" targetRef="applyCartAction" />
+    <bpmn:sequenceFlow id="Flow_CartActionGateway" sourceRef="applyCartAction" targetRef="cartActionGateway" />
+    <bpmn:sequenceFlow id="Flow_Checkout" sourceRef="cartActionGateway" targetRef="createOrder">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${checkoutRequested == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_ContinueShopping" sourceRef="cartActionGateway" targetRef="manageCart" />
+    <bpmn:sequenceFlow id="Flow_ShopDecision" sourceRef="createOrder" targetRef="shopDecision" />
+    <bpmn:sequenceFlow id="Flow_ShopTimeout" sourceRef="shopDecisionTimeout" targetRef="shopTimedOut" />
+    <bpmn:sequenceFlow id="Flow_ShopTimeoutNotice" sourceRef="shopTimedOut" targetRef="customerResultNotice" />
+    <bpmn:sequenceFlow id="Flow_DecisionGateway" sourceRef="shopDecision" targetRef="shopDecisionGateway" />
+    <bpmn:sequenceFlow id="Flow_Accepted" sourceRef="shopDecisionGateway" targetRef="orderAccepted">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${accepted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_Declined" sourceRef="shopDecisionGateway" targetRef="orderDeclined" />
+    <bpmn:sequenceFlow id="Flow_DispatchCourierSearch" sourceRef="orderAccepted" targetRef="dispatchCourierSearch" />
+    <bpmn:sequenceFlow id="Flow_WaitCourier" sourceRef="dispatchCourierSearch" targetRef="waitCourier" />
+    <bpmn:sequenceFlow id="Flow_CourierAssigned" sourceRef="waitCourier" targetRef="courierAssigned" />
+    <bpmn:sequenceFlow id="Flow_CourierTimeout" sourceRef="waitCourier" targetRef="courierSearchTimeout" />
+    <bpmn:sequenceFlow id="Flow_NotifyCourierAssigned" sourceRef="courierAssigned" targetRef="courierAssignedNotification" />
+    <bpmn:sequenceFlow id="Flow_NotificationSplit" sourceRef="courierAssignedNotification" targetRef="notificationSplit" />
+    <bpmn:sequenceFlow id="Flow_CustomerAssignmentNotice" sourceRef="notificationSplit" targetRef="customerAssignmentNotice" />
+    <bpmn:sequenceFlow id="Flow_ShopAssignmentNotice" sourceRef="notificationSplit" targetRef="shopAssignmentNotice" />
+    <bpmn:sequenceFlow id="Flow_CourierAssignmentNotice" sourceRef="notificationSplit" targetRef="courierAssignmentNotice" />
+    <bpmn:sequenceFlow id="Flow_CustomerNoticeDone" sourceRef="customerAssignmentNotice" targetRef="notificationJoin" />
+    <bpmn:sequenceFlow id="Flow_ShopNoticeDone" sourceRef="shopAssignmentNotice" targetRef="notificationJoin" />
+    <bpmn:sequenceFlow id="Flow_CourierNoticeDone" sourceRef="courierAssignmentNotice" targetRef="notificationJoin" />
+    <bpmn:sequenceFlow id="Flow_EndCourierAssigned" sourceRef="notificationJoin" targetRef="endCourierAssigned" />
+    <bpmn:sequenceFlow id="Flow_CancelNoCourier" sourceRef="courierSearchTimeout" targetRef="courierTimedOut" />
+    <bpmn:sequenceFlow id="Flow_CourierTimeoutNotice" sourceRef="courierTimedOut" targetRef="customerResultNotice" />
+    <bpmn:sequenceFlow id="Flow_DeclinedNotice" sourceRef="orderDeclined" targetRef="customerResultNotice" />
+    <bpmn:sequenceFlow id="Flow_EndOrderResult" sourceRef="customerResultNotice" targetRef="endOrderResult" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="DeliveryDiagram">
+    <bpmndi:BPMNPlane id="DeliveryPlane" bpmnElement="delivery-order">
+      <bpmndi:BPMNShape id="startShopping_di" bpmnElement="startShopping">
+        <dc:Bounds x="170" y="220" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="153" y="256" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="initializeShopping_di" bpmnElement="initializeShopping">
+        <dc:Bounds x="250" y="198" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="directCheckoutGateway_di" bpmnElement="directCheckoutGateway" isMarkerVisible="true">
+        <dc:Bounds x="410" y="213" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="394" y="263" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="manageCart_di" bpmnElement="manageCart">
+        <dc:Bounds x="510" y="100" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="applyCartAction_di" bpmnElement="applyCartAction">
+        <dc:Bounds x="680" y="100" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cartActionGateway_di" bpmnElement="cartActionGateway" isMarkerVisible="true">
+        <dc:Bounds x="840" y="115" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="839" y="165" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="createOrder_di" bpmnElement="createOrder">
+        <dc:Bounds x="940" y="198" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shopDecision_di" bpmnElement="shopDecision">
+        <dc:Bounds x="1110" y="198" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shopTimedOut_di" bpmnElement="shopTimedOut">
+        <dc:Bounds x="1110" y="370" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shopDecisionGateway_di" bpmnElement="shopDecisionGateway" isMarkerVisible="true">
+        <dc:Bounds x="1270" y="213" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1269" y="263" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="orderAccepted_di" bpmnElement="orderAccepted">
+        <dc:Bounds x="1370" y="198" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dispatchCourierSearch_di" bpmnElement="dispatchCourierSearch">
+        <dc:Bounds x="1530" y="198" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="waitCourier_di" bpmnElement="waitCourier">
+        <dc:Bounds x="1700" y="213" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1688" y="263" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="courierAssigned_di" bpmnElement="courierAssigned">
+        <dc:Bounds x="1800" y="220" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1785" y="256" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="courierSearchTimeout_di" bpmnElement="courierSearchTimeout">
+        <dc:Bounds x="1800" y="390" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1791" y="426" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="courierAssignedNotification_di" bpmnElement="courierAssignedNotification">
+        <dc:Bounds x="1880" y="198" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notificationSplit_di" bpmnElement="notificationSplit">
+        <dc:Bounds x="2060" y="213" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2056" y="263" width="59" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="customerAssignmentNotice_di" bpmnElement="customerAssignmentNotice">
+        <dc:Bounds x="2160" y="70" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shopAssignmentNotice_di" bpmnElement="shopAssignmentNotice">
+        <dc:Bounds x="2160" y="198" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="courierAssignmentNotice_di" bpmnElement="courierAssignmentNotice">
+        <dc:Bounds x="2160" y="330" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notificationJoin_di" bpmnElement="notificationJoin">
+        <dc:Bounds x="2350" y="213" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endCourierAssigned_di" bpmnElement="endCourierAssigned">
+        <dc:Bounds x="2450" y="220" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2426" y="256" width="84" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="courierTimedOut_di" bpmnElement="courierTimedOut">
+        <dc:Bounds x="1880" y="370" width="130" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="orderDeclined_di" bpmnElement="orderDeclined">
+        <dc:Bounds x="1370" y="470" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="customerResultNotice_di" bpmnElement="customerResultNotice">
+        <dc:Bounds x="2060" y="470" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endOrderResult_di" bpmnElement="endOrderResult">
+        <dc:Bounds x="2260" y="492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2247" y="528" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shopDecisionTimeout_di" bpmnElement="shopDecisionTimeout">
+        <dc:Bounds x="1147" y="260" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1138" y="296" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_InitializeShopping_di" bpmnElement="Flow_InitializeShopping">
+        <di:waypoint x="206" y="238" />
+        <di:waypoint x="250" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DirectCheckoutGateway_di" bpmnElement="Flow_DirectCheckoutGateway">
+        <di:waypoint x="360" y="238" />
+        <di:waypoint x="410" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DirectCheckout_di" bpmnElement="Flow_DirectCheckout">
+        <di:waypoint x="460" y="238" />
+        <di:waypoint x="940" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ManageCart_di" bpmnElement="Flow_ManageCart">
+        <di:waypoint x="435" y="213" />
+        <di:waypoint x="435" y="140" />
+        <di:waypoint x="510" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ApplyCartAction_di" bpmnElement="Flow_ApplyCartAction">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="680" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CartActionGateway_di" bpmnElement="Flow_CartActionGateway">
+        <di:waypoint x="790" y="140" />
+        <di:waypoint x="840" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Checkout_di" bpmnElement="Flow_Checkout">
+        <di:waypoint x="865" y="165" />
+        <di:waypoint x="865" y="238" />
+        <di:waypoint x="940" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ContinueShopping_di" bpmnElement="Flow_ContinueShopping">
+        <di:waypoint x="865" y="115" />
+        <di:waypoint x="865" y="55" />
+        <di:waypoint x="570" y="55" />
+        <di:waypoint x="570" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShopDecision_di" bpmnElement="Flow_ShopDecision">
+        <di:waypoint x="1060" y="238" />
+        <di:waypoint x="1110" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShopTimeout_di" bpmnElement="Flow_ShopTimeout">
+        <di:waypoint x="1165" y="296" />
+        <di:waypoint x="1165" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShopTimeoutNotice_di" bpmnElement="Flow_ShopTimeoutNotice">
+        <di:waypoint x="1230" y="430" />
+        <di:waypoint x="2130" y="430" />
+        <di:waypoint x="2130" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DecisionGateway_di" bpmnElement="Flow_DecisionGateway">
+        <di:waypoint x="1220" y="238" />
+        <di:waypoint x="1270" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Accepted_di" bpmnElement="Flow_Accepted">
+        <di:waypoint x="1320" y="238" />
+        <di:waypoint x="1370" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Declined_di" bpmnElement="Flow_Declined">
+        <di:waypoint x="1295" y="263" />
+        <di:waypoint x="1295" y="510" />
+        <di:waypoint x="1370" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DispatchCourierSearch_di" bpmnElement="Flow_DispatchCourierSearch">
+        <di:waypoint x="1480" y="238" />
+        <di:waypoint x="1530" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_WaitCourier_di" bpmnElement="Flow_WaitCourier">
+        <di:waypoint x="1650" y="238" />
+        <di:waypoint x="1700" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourierAssigned_di" bpmnElement="Flow_CourierAssigned">
+        <di:waypoint x="1750" y="238" />
+        <di:waypoint x="1800" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourierTimeout_di" bpmnElement="Flow_CourierTimeout">
+        <di:waypoint x="1725" y="263" />
+        <di:waypoint x="1725" y="408" />
+        <di:waypoint x="1800" y="408" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NotifyCourierAssigned_di" bpmnElement="Flow_NotifyCourierAssigned">
+        <di:waypoint x="1836" y="238" />
+        <di:waypoint x="1880" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NotificationSplit_di" bpmnElement="Flow_NotificationSplit">
+        <di:waypoint x="2010" y="238" />
+        <di:waypoint x="2060" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CustomerAssignmentNotice_di" bpmnElement="Flow_CustomerAssignmentNotice">
+        <di:waypoint x="2085" y="213" />
+        <di:waypoint x="2085" y="110" />
+        <di:waypoint x="2160" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShopAssignmentNotice_di" bpmnElement="Flow_ShopAssignmentNotice">
+        <di:waypoint x="2110" y="238" />
+        <di:waypoint x="2160" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourierAssignmentNotice_di" bpmnElement="Flow_CourierAssignmentNotice">
+        <di:waypoint x="2085" y="263" />
+        <di:waypoint x="2085" y="370" />
+        <di:waypoint x="2160" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CustomerNoticeDone_di" bpmnElement="Flow_CustomerNoticeDone">
+        <di:waypoint x="2300" y="110" />
+        <di:waypoint x="2375" y="110" />
+        <di:waypoint x="2375" y="213" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShopNoticeDone_di" bpmnElement="Flow_ShopNoticeDone">
+        <di:waypoint x="2300" y="238" />
+        <di:waypoint x="2350" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourierNoticeDone_di" bpmnElement="Flow_CourierNoticeDone">
+        <di:waypoint x="2300" y="370" />
+        <di:waypoint x="2375" y="370" />
+        <di:waypoint x="2375" y="263" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EndCourierAssigned_di" bpmnElement="Flow_EndCourierAssigned">
+        <di:waypoint x="2400" y="238" />
+        <di:waypoint x="2450" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CancelNoCourier_di" bpmnElement="Flow_CancelNoCourier">
+        <di:waypoint x="1836" y="408" />
+        <di:waypoint x="1880" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourierTimeoutNotice_di" bpmnElement="Flow_CourierTimeoutNotice">
+        <di:waypoint x="2010" y="410" />
+        <di:waypoint x="2130" y="410" />
+        <di:waypoint x="2130" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DeclinedNotice_di" bpmnElement="Flow_DeclinedNotice">
+        <di:waypoint x="1480" y="510" />
+        <di:waypoint x="2060" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EndOrderResult_di" bpmnElement="Flow_EndOrderResult">
+        <di:waypoint x="2200" y="510" />
+        <di:waypoint x="2260" y="510" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

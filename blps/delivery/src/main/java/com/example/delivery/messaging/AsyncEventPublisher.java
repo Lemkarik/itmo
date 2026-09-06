@@ -29,8 +29,6 @@ public class AsyncEventPublisher {
     
     @Transactional
     public void orderAccepted(Order order) {
-        messageProducer.sendCourierAssignmentRequest(order);
-        
         submitToLogistics(order, "ORDER_ACCEPTED");
     }
 

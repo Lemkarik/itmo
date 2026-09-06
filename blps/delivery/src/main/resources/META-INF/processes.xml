@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process-application xmlns="http://www.camunda.org/schema/1.0/ProcessApplication"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <process-archive name="delivery-order">
+    <resource>delivery-order.bpmn</resource>
+    <resource>courier-availability.bpmn</resource>
+    <resource>start-shopping.form</resource>
+    <resource>manage-cart.form</resource>
+    <resource>shop-decision.form</resource>
+    <resource>assignment-notification.form</resource>
+    <resource>order-result.form</resource>
+    <resource>courier-availability.form</resource>
+    <resource>availability-result.form</resource>
+    <properties>
+      <property name="isDeleteUponUndeploy">false</property>
+    </properties>
+  </process-archive>
+</process-application>

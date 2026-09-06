@@ -1,0 +1,17 @@
+{
+  "components": [
+    {
+      "label": "Order result",
+      "type": "textarea",
+      "key": "orderResultSummary",
+      "disabled": true
+    },
+    {
+      "text": "Complete this task to acknowledge the notification.",
+      "type": "text"
+    }
+  ],
+  "type": "default",
+  "id": "order-result",
+  "schemaVersion": 8
+}

@@ -1,0 +1,136 @@
+{
+  "components": [
+    {
+      "text": "Complete this task once for every cart operation. After Add or Remove, Camunda creates a refreshed cart task. Select Checkout only when the cart and delivery data are ready.",
+      "type": "text",
+      "id": "Field_1h9jock"
+    },
+    {
+      "label": "Available products",
+      "type": "textarea",
+      "key": "catalogSummary",
+      "disabled": true,
+      "id": "Field_1s1epp2"
+    },
+    {
+      "label": "Current cart",
+      "type": "textarea",
+      "key": "cartSummary",
+      "disabled": true,
+      "id": "Field_1ly9wc4"
+    },
+    {
+      "label": "Action",
+      "values": [
+        {
+          "label": "Add product",
+          "value": "ADD"
+        },
+        {
+          "label": "Remove product",
+          "value": "REMOVE"
+        },
+        {
+          "label": "Checkout",
+          "value": "CHECKOUT"
+        }
+      ],
+      "type": "select",
+      "key": "cartAction",
+      "validate": {
+        "required": true
+      },
+      "id": "Field_1ol71rt"
+    },
+    {
+      "label": "Add product",
+      "components": [
+        {
+          "label": "Product ID",
+          "type": "number",
+          "key": "shopItemId",
+          "validate": {
+            "required": true
+          },
+          "id": "Field_1t2cedv"
+        },
+        {
+          "label": "Quantity",
+          "type": "number",
+          "key": "quantity",
+          "validate": {
+            "required": true,
+            "min": 1
+          },
+          "id": "Field_1b7rmkh"
+        }
+      ],
+      "showOutline": true,
+      "type": "group",
+      "id": "Group_Add",
+      "conditional": {
+        "hide": "=cartAction = null or cartAction != \"ADD\""
+      }
+    },
+    {
+      "label": "Remove product",
+      "components": [
+        {
+          "label": "Product ID",
+          "type": "number",
+          "key": "removeShopItemId",
+          "validate": {
+            "required": true
+          },
+          "id": "Field_1bbtedu"
+        }
+      ],
+      "showOutline": true,
+      "type": "group",
+      "id": "Group_Remove",
+      "conditional": {
+        "hide": "=cartAction = null or cartAction != \"REMOVE\""
+      }
+    },
+    {
+      "label": "Checkout",
+      "components": [
+        {
+          "label": "Delivery address",
+          "type": "textfield",
+          "key": "deliveryAddress",
+          "validate": {
+            "required": true
+          },
+          "id": "Field_0yp9uom"
+        },
+        {
+          "subtype": "datetime",
+          "label": "Requested delivery date and time",
+          "type": "datetime",
+          "key": "requestedDeliveryTime",
+          "dateLabel": "Delivery date",
+          "timeLabel": "Delivery time",
+          "disallowPassedDates": true,
+          "timeSerializingFormat": "utc_normalized",
+          "timeInterval": 15,
+          "use24h": true,
+          "id": "Field_1e7uu0r"
+        }
+      ],
+      "showOutline": true,
+      "type": "group",
+      "id": "Group_Checkout",
+      "conditional": {
+        "hide": "=cartAction = null or cartAction != \"CHECKOUT\""
+      }
+    }
+  ],
+  "type": "default",
+  "id": "manage-cart",
+  "schemaVersion": 19,
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  }
+}

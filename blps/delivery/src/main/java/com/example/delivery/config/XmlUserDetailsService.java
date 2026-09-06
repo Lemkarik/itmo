@@ -13,10 +13,17 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.delivery.repository.UserRepository;
+
 @Service
 public class XmlUserDetailsService {
 
     private final List<XmlUser> users = new ArrayList<>();
+    private final UserRepository userRepository;
+
+    public XmlUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @PostConstruct
     public void init() {
@@ -32,12 +39,7 @@ public class XmlUserDetailsService {
                     String username = userElement.getElementsByTagName("username").item(0).getTextContent();
                     String password = userElement.getElementsByTagName("password").item(0).getTextContent();
                     String role = userElement.getElementsByTagName("role").item(0).getTextContent();
-                    String userIdStr = null;
-                    NodeList userIdNodes = userElement.getElementsByTagName("userId");
-                    if (userIdNodes.getLength() > 0) {
-                        userIdStr = userIdNodes.item(0).getTextContent();
-                    }
-                    users.add(new XmlUser(username, password, role, userIdStr));
+                    users.add(new XmlUser(username, password, role));
                 }
             }
         } catch (Exception e) {
@@ -56,9 +58,12 @@ public class XmlUserDetailsService {
         return new ArrayList<>(users);
     }
 
-    public record XmlUser(String username, String password, String role, String userId) {
-        public Long getUserIdAsLong() {
-            return userId != null ? Long.parseLong(userId) : null;
-        }
+    public Long resolveDatabaseUserId(String username) {
+        return userRepository.findByUsername(username)
+                .map(com.example.delivery.model.User::getId)
+                .orElse(null);
+    }
+
+    public record XmlUser(String username, String password, String role) {
     }
 }

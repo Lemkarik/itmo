@@ -11,23 +11,24 @@ import com.example.delivery.dto.OrderDecisionRequest;
 import com.example.delivery.dto.OrderResponse;
 import com.example.delivery.service.OrderService;
 import com.example.delivery.service.ShopService;
+import com.example.delivery.process.DeliveryProcessService;
 
 @RestController
 @RequestMapping("/api/shop/orders")
 public class ShopController {
 
-	private final ShopService shopService;
 	private final OrderService orderService;
+	private final DeliveryProcessService deliveryProcessService;
 
-	public ShopController(ShopService shopService, OrderService orderService) {
-		this.shopService = shopService;
+	public ShopController(OrderService orderService, DeliveryProcessService deliveryProcessService) {
 		this.orderService = orderService;
+		this.deliveryProcessService = deliveryProcessService;
 	}
 
 	@PostMapping("/{orderId}/accept")
 	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_ORDER_STATUS')")
 	public OrderResponse acceptOrder(@PathVariable Long orderId) {
-		shopService.acceptOrder(orderId);
+		deliveryProcessService.completeShopDecision(orderId, true, null);
 		return orderService.getOrder(orderId);
 	}
 
@@ -37,7 +38,7 @@ public class ShopController {
 			@PathVariable Long orderId,
 			@RequestBody(required = false) OrderDecisionRequest request
 	) {
-		shopService.declineOrder(orderId, request);
+		deliveryProcessService.completeShopDecision(orderId, false, request == null ? null : request.getReason());
 		return orderService.getOrder(orderId);
 	}
 }

@@ -39,11 +39,11 @@ public class CartController {
 		return cartService.addItem(customerId, request);
 	}
 
-	@DeleteMapping("/items/{itemId}")
+	@DeleteMapping("/items/{shopItemId}")
 	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_CART')")
-	public CartResponse removeItem(@PathVariable Long itemId) {
+	public CartResponse removeItem(@PathVariable Long shopItemId) {
 		Long customerId = getCurrentUserId();
-		return cartService.removeItem(customerId, itemId);
+		return cartService.removeItem(customerId, shopItemId);
 	}
 
 	private Long getCurrentUserId() {

@@ -18,6 +18,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 	Optional<Order> findFirstByStatusOrderByCreatedAtAsc(OrderStatus status);
 
+	Optional<Order> findByProcessInstanceId(String processInstanceId);
+
 	List<Order> findByStatusOrderByCreatedAtAsc(OrderStatus status);
 
 	List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
@@ -36,4 +38,3 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 	Page<Order> findByCourierIdOrderByCreatedAtDesc(Long courierId, Pageable pageable);
 }
-

@@ -1,0 +1,12 @@
+{
+  "components": [
+    {
+      "label": "Available for a new delivery",
+      "type": "checkbox",
+      "key": "available"
+    }
+  ],
+  "type": "default",
+  "id": "courier-availability",
+  "schemaVersion": 8
+}

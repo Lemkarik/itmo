@@ -5,40 +5,33 @@
         <username>admin</username>
         <password>admin123</password>
         <role>ADMIN</role>
-        <userId>0</userId>
     </user>
     <!-- Customer users -->
     <user>
         <username>alice</username>
         <password>password</password>
         <role>CUSTOMER</role>
-        <userId>1</userId>
     </user>
     <user>
         <username>bob</username>
         <password>password</password>
         <role>CUSTOMER</role>
-        <userId>2</userId>
     </user>
     <!-- Shop user -->
     <user>
         <username>shop</username>
         <password>shop123</password>
         <role>SHOP</role>
-        <userId>3</userId>
     </user>
     <!-- Courier users -->
     <user>
         <username>courier1</username>
         <password>courier123</password>
         <role>COURIER</role>
-        <userId>4</userId>
     </user>
     <user>
         <username>courier2</username>
         <password>courier456</password>
         <role>COURIER</role>
-        <userId>5</userId>
     </user>
 </users>
-

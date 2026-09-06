@@ -1,0 +1,17 @@
+{
+  "components": [
+    {
+      "label": "Delivery assignment",
+      "type": "textarea",
+      "key": "assignmentSummary",
+      "disabled": true
+    },
+    {
+      "text": "Complete this task to acknowledge the notification.",
+      "type": "text"
+    }
+  ],
+  "type": "default",
+  "id": "assignment-notification",
+  "schemaVersion": 8
+}

@@ -14,16 +14,23 @@ import com.example.delivery.exception.NotFoundException;
 import com.example.delivery.model.Privilege;
 import com.example.delivery.model.User;
 import com.example.delivery.model.UserRole;
+import com.example.delivery.messaging.MessageProducerService;
+import com.example.delivery.model.Order;
+import com.example.delivery.model.OrderStatus;
+import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.repository.UserRepository;
 @Service
 public class UserService {
 
 	private final UserRepository userRepository;
-	private final CourierAssignmentService courierAssignmentService;
+	private final OrderRepository orderRepository;
+	private final MessageProducerService messageProducerService;
 
-	public UserService(UserRepository userRepository, CourierAssignmentService courierAssignmentService) {
+	public UserService(UserRepository userRepository, OrderRepository orderRepository,
+			MessageProducerService messageProducerService) {
 		this.userRepository = userRepository;
-		this.courierAssignmentService = courierAssignmentService;
+		this.orderRepository = orderRepository;
+		this.messageProducerService = messageProducerService;
 	}
 	@Transactional
 	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_USERS')")
@@ -44,7 +51,7 @@ public class UserService {
 		User user = new User(request.getName().trim(), request.getRole(), available);
 		User saved = userRepository.save(user);
 		if (Boolean.TRUE.equals(saved.getAvailable())) {
-			courierAssignmentService.assignNextWaitingOrderToCourier(saved);
+			enqueueWaitingOrder();
 		}
 		return toResponse(saved);
 	}
@@ -73,6 +80,19 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
+	public User getUserByUsernameWithRole(String username, UserRole role) {
+		if (username == null || username.isBlank()) {
+			throw new BadRequestException("Username is required");
+		}
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new NotFoundException("User not found: " + username));
+		if (user.getRole() != role) {
+			throw new BadRequestException("User " + username + " is not a " + role);
+		}
+		return user;
+	}
+
+	@Transactional(readOnly = true)
 	public User getDefaultShop() {
 		return userRepository.findFirstByRoleOrderByIdAsc(UserRole.SHOP)
 				.orElseThrow(() -> new NotFoundException("Default shop is not initialized"));
@@ -86,7 +106,7 @@ public class UserService {
 		courier.setAvailable(request.getAvailable());
 		User saved = userRepository.save(courier);
 		if (Boolean.TRUE.equals(saved.getAvailable())) {
-			courierAssignmentService.assignNextWaitingOrderToCourier(saved);
+			enqueueWaitingOrder();
 		}
 		return toResponse(saved);
 	}
@@ -94,5 +114,9 @@ public class UserService {
 	private UserResponse toResponse(User user) {
 		return new UserResponse(user.getId(), user.getName(), user.getRole(), user.getAvailable());
 	}
-}
 
+	private void enqueueWaitingOrder() {
+		orderRepository.findFirstByStatusOrderByCreatedAtAsc(OrderStatus.ACCEPTED_WAITING_COURIER)
+				.ifPresent(messageProducerService::sendCourierAssignmentRequest);
+	}
+}

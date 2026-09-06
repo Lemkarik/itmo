@@ -70,4 +70,8 @@ public class JwtUtil {
             return false;
         }
     }
+
+    public long getExpirationMs() {
+        return expirationMs;
+    }
 }

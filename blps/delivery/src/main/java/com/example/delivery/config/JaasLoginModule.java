@@ -66,7 +66,10 @@ public class JaasLoginModule implements LoginModule {
             throw new LoginException("Invalid username or password");
         }
 
-        this.userId = user.getUserIdAsLong();
+        this.userId = xmlService.resolveDatabaseUserId(username);
+        if (this.userId == null) {
+            throw new LoginException("Application user is not initialized for account: " + username);
+        }
         this.role = UserRole.valueOf(user.role());
         succeeded = true;
         return true;

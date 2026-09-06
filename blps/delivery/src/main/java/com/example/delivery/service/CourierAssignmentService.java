@@ -66,19 +66,6 @@ public class CourierAssignmentService {
 		return true;
 	}
 
-	@Transactional
-	public boolean assignNextWaitingOrderToCourier(User courier) {
-		if (courier.getRole() != UserRole.COURIER || !Boolean.TRUE.equals(courier.getAvailable())) {
-			return false;
-		}
-		Optional<Order> orderOpt = orderRepository.findFirstByStatusOrderByCreatedAtAsc(OrderStatus.ACCEPTED_WAITING_COURIER);
-		if (orderOpt.isEmpty()) {
-			return false;
-		}
-		assignCourier(orderOpt.get(), courier);
-		return true;
-	}
-
 	private void assignCourier(Order order, User courier) {
 		OffsetDateTime now = OffsetDateTime.now(clock);
 		order.setCourier(courier);
@@ -87,6 +74,16 @@ public class CourierAssignmentService {
 		courier.setAvailable(false);
 		orderRepository.save(order);
 		userRepository.save(courier);
+
+	}
+
+	@Transactional
+	public void notifyCourierAssigned(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+		if (order.getStatus() != OrderStatus.COURIER_ASSIGNED || order.getCourier() == null) {
+			return;
+		}
 
 		String distanceSuffix = "";
 		if (shopAddress != null && !shopAddress.isBlank()
@@ -103,7 +100,7 @@ public class CourierAssignmentService {
 
 		
 		notificationService.createNotification(
-				courier,
+			order.getCourier(),
 				order,
 				NotificationType.COURIER_ASSIGNED,
 				"You have been assigned to order " + order.getId() + distanceSuffix
@@ -124,6 +121,24 @@ public class CourierAssignmentService {
 		
 		asyncEventPublisher.courierAssigned(order);
 
-		log.info("Courier {} assigned to order {}", courier.getId(), order.getId());
+		log.info("Courier {} assigned to order {}", order.getCourier().getId(), order.getId());
+	}
+
+	@Transactional
+	public void cancelBecauseNoCourier(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+		if (order.getStatus() != OrderStatus.ACCEPTED_WAITING_COURIER) {
+			return;
+		}
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		order.setStatus(OrderStatus.CANCELLED_NO_COURIER);
+		order.setCancelledAt(now);
+		orderRepository.save(order);
+		notificationService.createNotification(order.getCustomer(), order, NotificationType.COURIER_NOT_FOUND,
+				"No courier found in time. Order " + order.getId() + " cancelled");
+		notificationService.createNotification(order.getShop(), order, NotificationType.COURIER_NOT_FOUND,
+				"No courier found in time. Order " + order.getId() + " cancelled");
+		asyncEventPublisher.courierNotFound(order);
 	}
 }

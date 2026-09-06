@@ -11,6 +11,8 @@ import com.example.delivery.model.User;
 import com.example.delivery.model.UserRole;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+	Optional<User> findByUsername(String username);
+
 	List<User> findByRole(UserRole role);
 
 	Page<User> findAllByOrderByIdAsc(Pageable pageable);
@@ -20,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<User> findFirstByRoleAndAvailableTrueOrderByIdAsc(UserRole role);
 
 	Optional<User> findFirstByRoleOrderByIdAsc(UserRole role);
+
+	Optional<User> findFirstByRoleAndUsernameIsNullOrderByIdAsc(UserRole role);
 }

@@ -1,0 +1,11 @@
+{
+  "components": [
+    {
+      "text": "Start a shopping session. After starting, open the 'Manage cart and checkout' task to add or remove products and place the order.",
+      "type": "text"
+    }
+  ],
+  "type": "default",
+  "id": "start-shopping",
+  "schemaVersion": 8
+}

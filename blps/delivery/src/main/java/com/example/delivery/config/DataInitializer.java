@@ -20,6 +20,12 @@ public class DataInitializer implements CommandLineRunner {
 	@Override
 	public void run(String... args) {
 		jdbcTemplate.execute("ALTER TABLE IF EXISTS orders ALTER COLUMN delivery_address TYPE TEXT");
+		jdbcTemplate.execute("ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS users_role_check");
+		jdbcTemplate.execute("""
+				ALTER TABLE users
+				ADD CONSTRAINT users_role_check
+				CHECK (role IN ('CUSTOMER', 'SHOP', 'COURIER', 'ADMIN'))
+				""");
 		baselineDataService.ensureDefaultData();
 	}
 }

@@ -68,11 +68,8 @@ public class ShopService {
 				"Shop accepted order " + saved.getId()
 		);
 
-		
-		asyncEventPublisher.orderAccepted(saved);
 
-		log.info("Order {} accepted by shop. Courier assignment scheduled asynchronously",
-				orderId);
+		log.info("Order {} accepted by shop", orderId);
 
 		return saved;
 	}
@@ -110,9 +107,25 @@ public class ShopService {
 				"Order " + saved.getId() + " declined." + reason
 		);
 
-		
-		asyncEventPublisher.orderDeclined(saved);
+		return saved;
+	}
 
+	@Transactional
+	public Order timeoutShopDecision(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+		if (order.getStatus() != OrderStatus.PENDING_SHOP) {
+			return order;
+		}
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		order.setStatus(OrderStatus.DECLINED_BY_SHOP);
+		order.setShopRespondedAt(now);
+		order.setCancelledAt(now);
+		Order saved = orderRepository.save(order);
+		notificationService.createNotification(order.getCustomer(), saved, NotificationType.SHOP_DECLINED,
+				"Shop did not respond in time. Order " + saved.getId() + " declined automatically");
+		notificationService.createNotification(order.getShop(), saved, NotificationType.SHOP_DECLINED,
+				"Order " + saved.getId() + " declined automatically (no response in time)");
 		return saved;
 	}
 

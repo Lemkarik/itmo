@@ -1,0 +1,13 @@
+{
+  "components": [
+    {
+      "label": "Result",
+      "type": "textfield",
+      "key": "availabilitySummary",
+      "disabled": true
+    }
+  ],
+  "type": "default",
+  "id": "availability-result",
+  "schemaVersion": 8
+}

@@ -63,6 +63,9 @@ public class Order {
 
 	private OffsetDateTime courierAssignedAt;
 
+	@Column(name = "process_instance_id", unique = true)
+	private String processInstanceId;
+
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> items = new ArrayList<>();
 
@@ -183,6 +186,14 @@ public class Order {
 
 	public void setCourierAssignedAt(OffsetDateTime courierAssignedAt) {
 		this.courierAssignedAt = courierAssignedAt;
+	}
+
+	public String getProcessInstanceId() {
+		return processInstanceId;
+	}
+
+	public void setProcessInstanceId(String processInstanceId) {
+		this.processInstanceId = processInstanceId;
 	}
 
 	public List<OrderItem> getItems() {

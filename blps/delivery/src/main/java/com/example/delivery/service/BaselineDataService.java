@@ -11,20 +11,40 @@ import com.example.delivery.model.User;
 import com.example.delivery.model.UserRole;
 import com.example.delivery.repository.ShopItemRepository;
 import com.example.delivery.repository.UserRepository;
+import com.example.delivery.config.XmlUserDetailsService;
 
 @Service
 public class BaselineDataService {
 
 	private final UserRepository userRepository;
 	private final ShopItemRepository shopItemRepository;
+	private final XmlUserDetailsService xmlUserDetailsService;
 
-	public BaselineDataService(UserRepository userRepository, ShopItemRepository shopItemRepository) {
+	public BaselineDataService(
+			UserRepository userRepository,
+			ShopItemRepository shopItemRepository,
+			XmlUserDetailsService xmlUserDetailsService) {
 		this.userRepository = userRepository;
 		this.shopItemRepository = shopItemRepository;
+		this.xmlUserDetailsService = xmlUserDetailsService;
 	}
 
 	@Transactional
 	public void ensureDefaultData() {
+		xmlUserDetailsService.getAllUsers().forEach(xmlUser -> {
+			UserRole role = UserRole.valueOf(xmlUser.role());
+			User user = userRepository.findByUsername(xmlUser.username())
+					.orElseGet(() -> findUnlinkedUserOrCreate(role));
+			boolean newAccountLink = user.getUsername() == null;
+			user.setUsername(xmlUser.username());
+			user.setName(xmlUser.username());
+			user.setRole(role);
+			if (newAccountLink && role == UserRole.COURIER) {
+				user.setAvailable(true);
+			}
+			userRepository.save(user);
+		});
+
 		User shop = userRepository.findFirstByRoleOrderByIdAsc(UserRole.SHOP)
 				.orElseGet(() -> userRepository.save(new User("Default Shop", UserRole.SHOP, false)));
 
@@ -36,5 +56,13 @@ public class BaselineDataService {
 			);
 			shopItemRepository.saveAll(items);
 		}
+	}
+
+	private User findUnlinkedUserOrCreate(UserRole role) {
+		if (role == UserRole.SHOP) {
+			return userRepository.findFirstByRoleAndUsernameIsNullOrderByIdAsc(role)
+					.orElseGet(() -> new User("Default Shop", role, false));
+		}
+		return new User(role.name(), role, false);
 	}
 }

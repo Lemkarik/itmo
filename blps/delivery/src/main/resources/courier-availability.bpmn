@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="CourierAvailabilityDefinitions"
+                  targetNamespace="http://example.com/delivery">
+  <bpmn:process id="courier-availability" name="Courier availability" isExecutable="true" camunda:candidateStarterGroups="COURIER">
+    <bpmn:startEvent id="availabilityRequested" name="Set availability" camunda:formRef="courier-availability" camunda:formRefBinding="deployment" camunda:initiator="courierUsername">
+      <bpmn:outgoing>Flow_UpdateAvailability</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="updateAvailability" name="Update availability transactionally" camunda:delegateExpression="${updateCourierAvailabilityDelegate}">
+      <bpmn:incoming>Flow_UpdateAvailability</bpmn:incoming>
+      <bpmn:outgoing>Flow_ShowAvailability</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="availabilityConfirmation" name="Availability updated" camunda:assignee="${courierUsername}" camunda:formRef="availability-result" camunda:formRefBinding="deployment">
+      <bpmn:incoming>Flow_ShowAvailability</bpmn:incoming>
+      <bpmn:outgoing>Flow_EndAvailability</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="availabilityUpdated" name="Availability saved">
+      <bpmn:incoming>Flow_EndAvailability</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_UpdateAvailability" sourceRef="availabilityRequested" targetRef="updateAvailability" />
+    <bpmn:sequenceFlow id="Flow_ShowAvailability" sourceRef="updateAvailability" targetRef="availabilityConfirmation" />
+    <bpmn:sequenceFlow id="Flow_EndAvailability" sourceRef="availabilityConfirmation" targetRef="availabilityUpdated" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="CourierAvailabilityDiagram">
+    <bpmndi:BPMNPlane id="CourierAvailabilityPlane" bpmnElement="courier-availability">
+      <bpmndi:BPMNShape id="availabilityRequested_di" bpmnElement="availabilityRequested"><dc:Bounds x="120" y="180" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="updateAvailability_di" bpmnElement="updateAvailability"><dc:Bounds x="220" y="158" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="availabilityConfirmation_di" bpmnElement="availabilityConfirmation"><dc:Bounds x="420" y="158" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="availabilityUpdated_di" bpmnElement="availabilityUpdated"><dc:Bounds x="610" y="180" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_UpdateAvailability_di" bpmnElement="Flow_UpdateAvailability"><di:waypoint x="156" y="198" /><di:waypoint x="220" y="198" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ShowAvailability_di" bpmnElement="Flow_ShowAvailability"><di:waypoint x="350" y="198" /><di:waypoint x="420" y="198" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EndAvailability_di" bpmnElement="Flow_EndAvailability"><di:waypoint x="540" y="198" /><di:waypoint x="610" y="198" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

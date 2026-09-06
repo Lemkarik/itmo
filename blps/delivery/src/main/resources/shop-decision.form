@@ -1,0 +1,17 @@
+{
+  "components": [
+    { "label": "Order", "type": "textarea", "key": "orderSummary", "disabled": true },
+    { "label": "Accept order", "type": "checkbox", "key": "accepted" },
+    {
+      "label": "Decline reason",
+      "type": "textarea",
+      "key": "declineReason",
+      "conditional": {
+        "hide": "=accepted = true"
+      }
+    }
+  ],
+  "type": "default",
+  "id": "shop-decision",
+  "schemaVersion": 16
+}

@@ -66,6 +66,10 @@ public class OrderService {
 		if (request.getDeliveryAddress() == null || request.getDeliveryAddress().isBlank()) {
 			throw new BadRequestException("Delivery address is required");
 		}
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		if (request.getDeliveryTime() != null && !request.getDeliveryTime().isAfter(now)) {
+			throw new BadRequestException("Delivery date and time must be in the future");
+		}
 
 		User customer = userService.getUserWithRole(customerId, UserRole.CUSTOMER);
 		User shop = userService.getDefaultShop();
@@ -81,7 +85,6 @@ public class OrderService {
 		order.setStatus(OrderStatus.PENDING_SHOP);
 		order.setDeliveryAddress(request.getDeliveryAddress().trim());
 		order.setDeliveryTime(request.getDeliveryTime());
-		OffsetDateTime now = OffsetDateTime.now(clock);
 		order.setCreatedAt(now);
 		order.setUpdatedAt(now);
 
@@ -145,9 +148,32 @@ public class OrderService {
 	}
 
 	@Transactional(readOnly = true)
+	public OrderResponse getOrderForUser(Long orderId, Long userId, UserRole role) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+		boolean allowed = role == UserRole.ADMIN
+				|| role == UserRole.SHOP && order.getShop().getId().equals(userId)
+				|| role == UserRole.CUSTOMER && order.getCustomer().getId().equals(userId)
+				|| role == UserRole.COURIER && order.getCourier() != null
+						&& order.getCourier().getId().equals(userId);
+		if (!allowed) {
+			throw new NotFoundException("Order not found: " + orderId);
+		}
+		return toResponse(order);
+	}
+
+	@Transactional(readOnly = true)
 	public Order getOrderEntity(Long orderId) {
 		return orderRepository.findById(orderId)
 				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+	}
+
+	@Transactional
+	public void linkProcessInstance(Long orderId, String processInstanceId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+		order.setProcessInstanceId(processInstanceId);
+		orderRepository.save(order);
 	}
 
 	@Transactional(readOnly = true)

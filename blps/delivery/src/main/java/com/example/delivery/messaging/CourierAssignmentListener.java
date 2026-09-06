@@ -11,6 +11,7 @@ import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.CourierAssignmentService;
+import com.example.delivery.process.DeliveryProcessService;
 
 
 @Component
@@ -21,12 +22,15 @@ public class CourierAssignmentListener {
 
     private final OrderRepository orderRepository;
     private final CourierAssignmentService courierAssignmentService;
+    private final DeliveryProcessService deliveryProcessService;
 
     public CourierAssignmentListener(
             OrderRepository orderRepository,
-            CourierAssignmentService courierAssignmentService) {
+            CourierAssignmentService courierAssignmentService,
+            DeliveryProcessService deliveryProcessService) {
         this.orderRepository = orderRepository;
         this.courierAssignmentService = courierAssignmentService;
+        this.deliveryProcessService = deliveryProcessService;
     }
 
     @JmsListener(destination = "courier.assignment", concurrency = "1-3")
@@ -51,6 +55,7 @@ public class CourierAssignmentListener {
 
             boolean assigned = courierAssignmentService.tryAssignCourier(order);
             if (assigned) {
+                deliveryProcessService.correlateCourierAssigned(order);
                 log.info("Courier assigned to order {} successfully", order.getId());
             } else {
                 log.info("No courier available for order {} at this time, will retry later",

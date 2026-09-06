@@ -15,7 +15,6 @@ import com.example.delivery.model.CartItem;
 import com.example.delivery.model.ShopItem;
 import com.example.delivery.model.User;
 import com.example.delivery.model.UserRole;
-import com.example.delivery.repository.CartItemRepository;
 import com.example.delivery.repository.CartRepository;
 import com.example.delivery.repository.ShopItemRepository;
 
@@ -23,18 +22,15 @@ import com.example.delivery.repository.ShopItemRepository;
 public class CartService {
 
 	private final CartRepository cartRepository;
-	private final CartItemRepository cartItemRepository;
 	private final ShopItemRepository shopItemRepository;
 	private final UserService userService;
 
 	public CartService(
 			CartRepository cartRepository,
-			CartItemRepository cartItemRepository,
 			ShopItemRepository shopItemRepository,
 			UserService userService
 	) {
 		this.cartRepository = cartRepository;
-		this.cartItemRepository = cartItemRepository;
 		this.shopItemRepository = shopItemRepository;
 		this.userService = userService;
 	}
@@ -97,18 +93,31 @@ public class CartService {
 	}
 
 	@Transactional
-	public CartResponse removeItem(Long customerId, Long itemId) {
+	public CartResponse removeItem(Long customerId, Long shopItemId) {
+		return removeItem(customerId, shopItemId, true);
+	}
+
+	@Transactional
+	public CartResponse removeItemIfPresent(Long customerId, Long shopItemId) {
+		return removeItem(customerId, shopItemId, false);
+	}
+
+	private CartResponse removeItem(Long customerId, Long shopItemId, boolean failIfMissing) {
 		User customer = userService.getUserWithRole(customerId, UserRole.CUSTOMER);
 		Cart cart = cartRepository.findByCustomerId(customer.getId())
 				.orElseThrow(() -> new NotFoundException("Cart not found for customer: " + customerId));
-		CartItem item = cartItemRepository.findById(itemId)
-				.orElseThrow(() -> new NotFoundException("Cart item not found: " + itemId));
-		if (!item.getCart().getId().equals(cart.getId())) {
-			throw new BadRequestException("Item does not belong to this customer's cart");
+		CartItem item = cart.getItems().stream()
+				.filter(cartItem -> cartItem.getShopItem().getId().equals(shopItemId))
+				.findFirst()
+				.orElse(null);
+		if (item == null) {
+			if (failIfMissing) {
+				throw new NotFoundException("Product not found in cart: " + shopItemId);
+			}
+			return toResponse(cart);
 		}
 		cart.getItems().remove(item);
-		cartItemRepository.delete(item);
-		return toResponse(cart);
+		return toResponse(cartRepository.save(cart));
 	}
 
 	@Transactional
