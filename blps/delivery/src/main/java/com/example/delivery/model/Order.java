@@ -47,7 +47,13 @@ public class Order {
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String deliveryAddress;
 
+	private OffsetDateTime requestedDeliveryTime;
+
 	private OffsetDateTime deliveryTime;
+
+	private Long estimatedDeliveryMinutes;
+
+	private Double deliveryDistanceKm;
 
 	@Column(nullable = false)
 	private OffsetDateTime createdAt;
@@ -129,12 +135,36 @@ public class Order {
 		this.deliveryAddress = deliveryAddress;
 	}
 
+	public OffsetDateTime getRequestedDeliveryTime() {
+		return requestedDeliveryTime;
+	}
+
+	public void setRequestedDeliveryTime(OffsetDateTime requestedDeliveryTime) {
+		this.requestedDeliveryTime = requestedDeliveryTime;
+	}
+
 	public OffsetDateTime getDeliveryTime() {
 		return deliveryTime;
 	}
 
 	public void setDeliveryTime(OffsetDateTime deliveryTime) {
 		this.deliveryTime = deliveryTime;
+	}
+
+	public Long getEstimatedDeliveryMinutes() {
+		return estimatedDeliveryMinutes;
+	}
+
+	public void setEstimatedDeliveryMinutes(Long estimatedDeliveryMinutes) {
+		this.estimatedDeliveryMinutes = estimatedDeliveryMinutes;
+	}
+
+	public Double getDeliveryDistanceKm() {
+		return deliveryDistanceKm;
+	}
+
+	public void setDeliveryDistanceKm(Double deliveryDistanceKm) {
+		this.deliveryDistanceKm = deliveryDistanceKm;
 	}
 
 	public OffsetDateTime getCreatedAt() {

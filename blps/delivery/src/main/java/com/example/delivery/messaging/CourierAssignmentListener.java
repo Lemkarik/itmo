@@ -12,7 +12,6 @@ import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.CourierAssignmentService;
 
-
 @Component
 @ConditionalOnProperty(name = "app.features.listener.courier-assignment", havingValue = "true", matchIfMissing = true)
 public class CourierAssignmentListener {

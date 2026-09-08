@@ -494,7 +494,7 @@
       "created": 1763384400000,
       "modified": 1763384400000,
       "name": "Happy Remove First Cart Item",
-      "description": "Remove cart item id 1 (optional). Use CUSTOMER token.",
+      "description": "Remove shop item id 1 from the cart (optional). Use CUSTOMER token.",
       "url": "http://localhost:32318/api/customers/2/cart/items/1",
       "method": "DELETE",
       "headers": [

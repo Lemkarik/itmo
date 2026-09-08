@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.delivery.messaging.AsyncEventPublisher;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -30,17 +29,14 @@ public class ShopTimeoutJob implements Job {
 
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
-    private final AsyncEventPublisher asyncEventPublisher;
     private final Clock clock;
 
     public ShopTimeoutJob(
             OrderRepository orderRepository,
             NotificationService notificationService,
-            AsyncEventPublisher asyncEventPublisher,
             Clock clock) {
         this.orderRepository = orderRepository;
         this.notificationService = notificationService;
-        this.asyncEventPublisher = asyncEventPublisher;
         this.clock = clock;
     }
 
@@ -94,8 +90,6 @@ public class ShopTimeoutJob implements Job {
                 NotificationType.SHOP_DECLINED,
                 "Order " + order.getId() + " declined automatically (no response in time)"
         );
-
-        asyncEventPublisher.orderTimedOut(order);
 
         log.info("Order {} timed out - shop did not respond in time", order.getId());
     }

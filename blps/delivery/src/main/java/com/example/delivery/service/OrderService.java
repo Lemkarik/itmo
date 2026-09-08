@@ -16,7 +16,6 @@ import com.example.delivery.dto.OrderResponse;
 import com.example.delivery.dto.PaginationRequest;
 import com.example.delivery.exception.BadRequestException;
 import com.example.delivery.exception.NotFoundException;
-import com.example.delivery.messaging.AsyncEventPublisher;
 import com.example.delivery.model.Cart;
 import com.example.delivery.model.CartItem;
 import com.example.delivery.model.NotificationType;
@@ -36,7 +35,6 @@ public class OrderService {
 	private final UserService userService;
 	private final CartService cartService;
 	private final NotificationService notificationService;
-	private final AsyncEventPublisher asyncEventPublisher;
 	private final DeliveryEstimationService deliveryEstimationService;
 	private final Clock clock;
 
@@ -45,7 +43,6 @@ public class OrderService {
 			UserService userService,
 			CartService cartService,
 			NotificationService notificationService,
-			AsyncEventPublisher asyncEventPublisher,
 			DeliveryEstimationService deliveryEstimationService,
 			Clock clock
 	) {
@@ -53,7 +50,6 @@ public class OrderService {
 		this.userService = userService;
 		this.cartService = cartService;
 		this.notificationService = notificationService;
-		this.asyncEventPublisher = asyncEventPublisher;
 		this.deliveryEstimationService = deliveryEstimationService;
 		this.clock = clock;
 	}
@@ -80,7 +76,7 @@ public class OrderService {
 		order.setShop(shop);
 		order.setStatus(OrderStatus.PENDING_SHOP);
 		order.setDeliveryAddress(request.getDeliveryAddress().trim());
-		order.setDeliveryTime(request.getDeliveryTime());
+		order.setRequestedDeliveryTime(request.getDeliveryTime());
 		OffsetDateTime now = OffsetDateTime.now(clock);
 		order.setCreatedAt(now);
 		order.setUpdatedAt(now);
@@ -91,6 +87,8 @@ public class OrderService {
 						request.getDeliveryTime(),
 						order.getDeliveryAddress());
 		order.setDeliveryTime(deliveryDecision.chosen());
+		order.setEstimatedDeliveryMinutes(deliveryDecision.estimatedMinutes());
+		order.setDeliveryDistanceKm(deliveryDecision.distanceKm());
 
 		for (CartItem cartItem : cart.getItems()) {
 			if (!cartItem.getShopItem().getShop().getId().equals(shop.getId())) {
@@ -108,6 +106,12 @@ public class OrderService {
 
 		Order saved = orderRepository.save(order);
 		cartService.clearCart(cart);
+		String deliveryEstimateDetails = deliveryDecision.estimatedMinutes() != null
+				? ". Estimated delivery time: ~" + deliveryDecision.estimatedMinutes() + " minutes"
+				: "";
+		if (deliveryDecision.adjustedFromRequested()) {
+			deliveryEstimateDetails += "; requested time was too soon and was adjusted";
+		}
 
 		
 		notificationService.createNotification(
@@ -122,15 +126,8 @@ public class OrderService {
 				NotificationType.ORDER_CREATED,
 				"Order " + saved.getId() + " created and sent to shop"
 						+ (saved.getDeliveryTime() != null ? ". Delivery by: " + saved.getDeliveryTime() : "")
-						+ (deliveryDecision.adjustedFromRequested()
-								? " (requested time was too soon and was adjusted)"
-								: (deliveryDecision.estimatedEarliest() != null && request.getDeliveryTime() != null
-										? " (earliest ETA: " + deliveryDecision.estimatedEarliest() + ")"
-										: ""))
+						+ deliveryEstimateDetails
 		);
-
-		
-		asyncEventPublisher.orderCreated(saved);
 
 		log.info("Order {} created by customer {}", saved.getId(), customerId);
 
@@ -191,7 +188,10 @@ public class OrderService {
 				order.getShop().getId(),
 				courierId,
 				order.getDeliveryAddress(),
+				order.getRequestedDeliveryTime(),
+				order.getEstimatedDeliveryMinutes(),
 				order.getDeliveryTime(),
+				order.getDeliveryDistanceKm(),
 				order.getCreatedAt(),
 				order.getUpdatedAt(),
 				order.getShopRespondedAt(),

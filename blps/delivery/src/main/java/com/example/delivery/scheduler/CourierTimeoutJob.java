@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.delivery.messaging.AsyncEventPublisher;
 import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
@@ -34,19 +33,16 @@ public class CourierTimeoutJob implements Job {
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
     private final MessageProducerService messageProducerService;
-    private final AsyncEventPublisher asyncEventPublisher;
     private final Clock clock;
 
     public CourierTimeoutJob(
             OrderRepository orderRepository,
             NotificationService notificationService,
             MessageProducerService messageProducerService,
-            AsyncEventPublisher asyncEventPublisher,
             Clock clock) {
         this.orderRepository = orderRepository;
         this.notificationService = notificationService;
         this.messageProducerService = messageProducerService;
-        this.asyncEventPublisher = asyncEventPublisher;
         this.clock = clock;
     }
 
@@ -103,8 +99,6 @@ public class CourierTimeoutJob implements Job {
                 NotificationType.COURIER_NOT_FOUND,
                 "No courier found in time. Order " + order.getId() + " cancelled"
         );
-
-        asyncEventPublisher.courierNotFound(order);
 
         log.info("Order {} cancelled - no courier found in time", order.getId());
     }

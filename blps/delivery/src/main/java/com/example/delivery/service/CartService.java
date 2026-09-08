@@ -45,14 +45,13 @@ public class CartService {
 		Cart cart = cartRepository.findByCustomerId(customer.getId()).orElseGet(() -> new Cart(customer));
 		List<CartItemResponse> items = cart.getItems().stream()
 				.map(item -> new CartItemResponse(
-						item.getId(),
 						item.getShopItem().getId(),
 						item.getProductName(),
 						item.getQuantity(),
 						item.getUnitPrice()
 				))
 				.toList();
-		return new CartResponse(customer.getId(), items);
+		return new CartResponse(items);
 	}
 
 	@Transactional
@@ -97,15 +96,14 @@ public class CartService {
 	}
 
 	@Transactional
-	public CartResponse removeItem(Long customerId, Long itemId) {
+	public CartResponse removeItem(Long customerId, Long shopItemId) {
 		User customer = userService.getUserWithRole(customerId, UserRole.CUSTOMER);
 		Cart cart = cartRepository.findByCustomerId(customer.getId())
 				.orElseThrow(() -> new NotFoundException("Cart not found for customer: " + customerId));
-		CartItem item = cartItemRepository.findById(itemId)
-				.orElseThrow(() -> new NotFoundException("Cart item not found: " + itemId));
-		if (!item.getCart().getId().equals(cart.getId())) {
-			throw new BadRequestException("Item does not belong to this customer's cart");
-		}
+		CartItem item = cart.getItems().stream()
+				.filter(cartItem -> cartItem.getShopItem().getId().equals(shopItemId))
+				.findFirst()
+				.orElseThrow(() -> new NotFoundException("Product not found in cart: " + shopItemId));
 		cart.getItems().remove(item);
 		cartItemRepository.delete(item);
 		return toResponse(cart);
@@ -126,13 +124,12 @@ public class CartService {
 	private CartResponse toResponse(Cart cart) {
 		List<CartItemResponse> items = cart.getItems().stream()
 				.map(item -> new CartItemResponse(
-						item.getId(),
 						item.getShopItem().getId(),
 						item.getProductName(),
 						item.getQuantity(),
 						item.getUnitPrice()
 				))
 				.toList();
-		return new CartResponse(cart.getCustomer().getId(), items);
+		return new CartResponse(items);
 	}
 }

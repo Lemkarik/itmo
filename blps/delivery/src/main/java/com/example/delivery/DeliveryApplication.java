@@ -4,9 +4,9 @@ import java.time.Clock;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.jms.autoconfigure.JmsAutoConfiguration;
-import org.springframework.boot.jms.autoconfigure.JndiConnectionFactoryAutoConfiguration;
-import org.springframework.boot.artemis.autoconfigure.ArtemisAutoConfiguration;
+import org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration;
+import org.springframework.boot.autoconfigure.jms.JndiConnectionFactoryAutoConfiguration;
+import org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication(exclude = {

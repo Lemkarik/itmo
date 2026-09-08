@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.delivery.dto.OrderDecisionRequest;
 import com.example.delivery.exception.ConflictException;
 import com.example.delivery.exception.NotFoundException;
-import com.example.delivery.messaging.AsyncEventPublisher;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -27,20 +27,20 @@ public class ShopService {
 	private final OrderRepository orderRepository;
 	private final UserService userService;
 	private final NotificationService notificationService;
-	private final AsyncEventPublisher asyncEventPublisher;
+	private final MessageProducerService messageProducerService;
 	private final Clock clock;
 
 	public ShopService(
 			OrderRepository orderRepository,
 			UserService userService,
 			NotificationService notificationService,
-			AsyncEventPublisher asyncEventPublisher,
+			MessageProducerService messageProducerService,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userService = userService;
 		this.notificationService = notificationService;
-		this.asyncEventPublisher = asyncEventPublisher;
+		this.messageProducerService = messageProducerService;
 		this.clock = clock;
 	}
 
@@ -69,7 +69,7 @@ public class ShopService {
 		);
 
 		
-		asyncEventPublisher.orderAccepted(saved);
+		messageProducerService.sendCourierAssignmentRequest(saved);
 
 		log.info("Order {} accepted by shop. Courier assignment scheduled asynchronously",
 				orderId);
@@ -109,9 +109,6 @@ public class ShopService {
 				NotificationType.SHOP_DECLINED,
 				"Order " + saved.getId() + " declined." + reason
 		);
-
-		
-		asyncEventPublisher.orderDeclined(saved);
 
 		return saved;
 	}

@@ -1,7 +1,6 @@
 package com.example.delivery.messaging;
 
 import java.time.Clock;
-import java.time.OffsetDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +16,6 @@ import com.example.delivery.model.User;
 import com.example.delivery.repository.NotificationRepository;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.repository.UserRepository;
-
 
 @Component
 @ConditionalOnProperty(name = "app.features.listener.notification-dispatch", havingValue = "true", matchIfMissing = true)
@@ -59,7 +57,6 @@ public class NotificationDispatchListener {
                 order = orderRepository.findById(message.getOrderId()).orElse(null);
             }
 
-            
             NotificationType type = inferNotificationType(message.getMessage());
 
             Notification notification = new Notification(recipient, order, type, message.getMessage());
