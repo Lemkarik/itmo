@@ -1,143 +1,182 @@
-CREATE TABLE IF NOT EXISTS qrtz_job_details
+DO $$
+  DECLARE DropDb INT := 1; -- Set this to 0 to skip DROP statements, 1 to include them
+BEGIN
+  IF DropDb = 1 THEN
+    SET client_min_messages = WARNING;
+    DROP TABLE IF EXISTS qrtz_fired_triggers;
+    DROP TABLE IF EXISTS qrtz_paused_trigger_grps;
+    DROP TABLE IF EXISTS qrtz_scheduler_state;
+    DROP TABLE IF EXISTS qrtz_locks;
+    DROP TABLE IF EXISTS qrtz_simprop_triggers;
+    DROP TABLE IF EXISTS qrtz_simple_triggers;
+    DROP TABLE IF EXISTS qrtz_cron_triggers;
+    DROP TABLE IF EXISTS qrtz_blob_triggers;
+    DROP TABLE IF EXISTS qrtz_triggers;
+    DROP TABLE IF EXISTS qrtz_job_details;
+    DROP TABLE IF EXISTS qrtz_calendars;
+    SET client_min_messages = NOTICE;
+  END IF;
+END $$;
+
+CREATE TABLE qrtz_job_details
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    JOB_NAME  VARCHAR(200) NOT NULL,
-    JOB_GROUP VARCHAR(200) NOT NULL,
-    DESCRIPTION VARCHAR(250) NULL,
-    JOB_CLASS_NAME   VARCHAR(250) NOT NULL,
-    IS_DURABLE BOOLEAN NOT NULL,
-    IS_NONCONCURRENT BOOLEAN NOT NULL,
-    IS_UPDATE_DATA BOOLEAN NOT NULL,
-    REQUESTS_RECOVERY BOOLEAN NOT NULL,
-    JOB_DATA BYTEA NULL,
-    PRIMARY KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)
+    sched_name TEXT NOT NULL,
+    job_name TEXT NOT NULL,
+    job_group TEXT NOT NULL,
+    description TEXT NULL,
+    job_class_name TEXT NOT NULL,
+    is_durable BOOL NOT NULL,
+    is_nonconcurrent BOOL NOT NULL,
+    is_update_data BOOL NOT NULL,
+    requests_recovery BOOL NOT NULL,
+    job_data BYTEA NULL,
+    PRIMARY KEY (sched_name, job_name, job_group)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_triggers
+CREATE TABLE qrtz_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    JOB_NAME  VARCHAR(200) NOT NULL,
-    JOB_GROUP VARCHAR(200) NOT NULL,
-    DESCRIPTION VARCHAR(250) NULL,
-    NEXT_FIRE_TIME BIGINT NULL,
-    PREV_FIRE_TIME BIGINT NULL,
-    PRIORITY INTEGER NULL,
-    TRIGGER_STATE VARCHAR(16) NOT NULL,
-    TRIGGER_TYPE VARCHAR(8) NOT NULL,
-    START_TIME BIGINT NOT NULL,
-    END_TIME BIGINT NULL,
-    CALENDAR_NAME VARCHAR(200) NULL,
-    MISFIRE_INSTR SMALLINT NULL,
-    JOB_DATA BYTEA NULL,
-    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
-    FOREIGN KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)
-        REFERENCES QRTZ_JOB_DETAILS(SCHED_NAME,JOB_NAME,JOB_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    job_name TEXT NOT NULL,
+    job_group TEXT NOT NULL,
+    description TEXT NULL,
+    next_fire_time BIGINT NULL,
+    prev_fire_time BIGINT NULL,
+    priority INTEGER NULL,
+    trigger_state TEXT NOT NULL,
+    trigger_type TEXT NOT NULL,
+    start_time BIGINT NOT NULL,
+    end_time BIGINT NULL,
+    calendar_name TEXT NULL,
+    misfire_instr SMALLINT NULL,
+    misfire_orig_fire_time BIGINT NULL,
+    execution_group VARCHAR(200) NULL,
+    job_data BYTEA NULL,
+    PRIMARY KEY (sched_name, trigger_name, trigger_group),
+    FOREIGN KEY (sched_name, job_name, job_group)
+      REFERENCES qrtz_job_details (sched_name, job_name, job_group)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_simple_triggers
+CREATE TABLE qrtz_simple_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    REPEAT_COUNT BIGINT NOT NULL,
-    REPEAT_INTERVAL BIGINT NOT NULL,
-    TIMES_TRIGGERED BIGINT NOT NULL,
-    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
-    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
-	REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    repeat_count BIGINT NOT NULL,
+    repeat_interval BIGINT NOT NULL,
+    times_triggered BIGINT NOT NULL,
+    PRIMARY KEY (sched_name, trigger_name, trigger_group),
+    FOREIGN KEY (sched_name, trigger_name, trigger_group)
+      REFERENCES qrtz_triggers (sched_name, trigger_name, trigger_group)
+      ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_cron_triggers
+CREATE TABLE qrtz_simprop_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    CRON_EXPRESSION VARCHAR(120) NOT NULL,
-    TIME_ZONE_ID VARCHAR(80),
-    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
-    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
-	REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    str_prop_1 TEXT NULL,
+    str_prop_2 TEXT NULL,
+    str_prop_3 TEXT NULL,
+    int_prop_1 INTEGER NULL,
+    int_prop_2 INTEGER NULL,
+    long_prop_1 BIGINT NULL,
+    long_prop_2 BIGINT NULL,
+    dec_prop_1 NUMERIC NULL,
+    dec_prop_2 NUMERIC NULL,
+    bool_prop_1 BOOL NULL,
+    bool_prop_2 BOOL NULL,
+    time_zone_id TEXT NULL,
+    PRIMARY KEY (sched_name, trigger_name, trigger_group),
+    FOREIGN KEY (sched_name, trigger_name, trigger_group)
+      REFERENCES qrtz_triggers (sched_name, trigger_name, trigger_group)
+      ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_simprop_triggers
+CREATE TABLE qrtz_cron_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    STR_PROP_1 VARCHAR(512) NULL,
-    STR_PROP_2 VARCHAR(512) NULL,
-    STR_PROP_3 VARCHAR(512) NULL,
-    INT_PROP_1 INTEGER NULL,
-    INT_PROP_2 INTEGER NULL,
-    LONG_PROP_1 BIGINT NULL,
-    LONG_PROP_2 BIGINT NULL,
-    DEC_PROP_1 NUMERIC(13,4) NULL,
-    DEC_PROP_2 NUMERIC(13,4) NULL,
-    BOOL_PROP_1 BOOLEAN NULL,
-    BOOL_PROP_2 BOOLEAN NULL,
-    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
-    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
-	REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    cron_expression TEXT NOT NULL,
+    time_zone_id TEXT,
+    PRIMARY KEY (sched_name, trigger_name, trigger_group),
+    FOREIGN KEY (sched_name, trigger_name, trigger_group)
+      REFERENCES qrtz_triggers (sched_name, trigger_name, trigger_group)
+      ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_blob_triggers
+CREATE TABLE qrtz_blob_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    BLOB_DATA BYTEA NULL,
-    PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
-    FOREIGN KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
-	REFERENCES QRTZ_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    blob_data BYTEA NULL,
+    PRIMARY KEY (sched_name, trigger_name, trigger_group),
+    FOREIGN KEY (sched_name, trigger_name, trigger_group)
+      REFERENCES qrtz_triggers (sched_name, trigger_name, trigger_group)
+      ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_calendars
+CREATE TABLE qrtz_calendars
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    CALENDAR_NAME  VARCHAR(200) NOT NULL,
-    CALENDAR BYTEA NOT NULL,
-    PRIMARY KEY (SCHED_NAME,CALENDAR_NAME)
+    sched_name TEXT NOT NULL,
+    calendar_name TEXT NOT NULL,
+    calendar BYTEA NOT NULL,
+    PRIMARY KEY (sched_name, calendar_name)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_paused_trigger_grps
+CREATE TABLE qrtz_paused_trigger_grps
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    TRIGGER_GROUP  VARCHAR(200) NOT NULL,
-    PRIMARY KEY (SCHED_NAME,TRIGGER_GROUP)
+    sched_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    PRIMARY KEY (sched_name, trigger_group)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_fired_triggers
+CREATE TABLE qrtz_fired_triggers
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    ENTRY_ID VARCHAR(95) NOT NULL,
-    TRIGGER_NAME VARCHAR(200) NOT NULL,
-    TRIGGER_GROUP VARCHAR(200) NOT NULL,
-    INSTANCE_NAME VARCHAR(200) NOT NULL,
-    FIRED_TIME BIGINT NOT NULL,
-    SCHED_TIME BIGINT NOT NULL,
-    PRIORITY INTEGER NOT NULL,
-    STATE VARCHAR(16) NOT NULL,
-    JOB_NAME VARCHAR(200) NULL,
-    JOB_GROUP VARCHAR(200) NULL,
-    IS_NONCONCURRENT BOOLEAN NULL,
-    REQUESTS_RECOVERY BOOLEAN NULL,
-    PRIMARY KEY (SCHED_NAME,ENTRY_ID)
+    sched_name TEXT NOT NULL,
+    entry_id TEXT NOT NULL,
+    trigger_name TEXT NOT NULL,
+    trigger_group TEXT NOT NULL,
+    instance_name TEXT NOT NULL,
+    fired_time BIGINT NOT NULL,
+    sched_time BIGINT NOT NULL,
+    priority INTEGER NOT NULL,
+    state TEXT NOT NULL,
+    job_name TEXT NULL,
+    job_group TEXT NULL,
+    is_nonconcurrent BOOL NOT NULL,
+    requests_recovery BOOL NULL,
+    execution_group VARCHAR(200) NULL,
+    PRIMARY KEY (sched_name, entry_id)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_scheduler_state
+CREATE TABLE qrtz_scheduler_state
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    INSTANCE_NAME VARCHAR(200) NOT NULL,
-    LAST_CHECKIN_TIME BIGINT NOT NULL,
-    CHECKIN_INTERVAL BIGINT NOT NULL,
-    PRIMARY KEY (SCHED_NAME,INSTANCE_NAME)
+    sched_name TEXT NOT NULL,
+    instance_name TEXT NOT NULL,
+    last_checkin_time BIGINT NOT NULL,
+    checkin_interval BIGINT NOT NULL,
+    PRIMARY KEY (sched_name, instance_name)
 );
 
-CREATE TABLE IF NOT EXISTS qrtz_locks
+CREATE TABLE qrtz_locks
   (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    LOCK_NAME  VARCHAR(40) NOT NULL,
-    PRIMARY KEY (SCHED_NAME,LOCK_NAME)
+    sched_name TEXT NOT NULL,
+    lock_name TEXT NOT NULL,
+    PRIMARY KEY (sched_name, lock_name)
 );
+
+CREATE INDEX idx_qrtz_j_req_recovery ON qrtz_job_details (requests_recovery);
+CREATE INDEX idx_qrtz_t_next_fire_time ON qrtz_triggers (next_fire_time);
+CREATE INDEX idx_qrtz_t_state ON qrtz_triggers (trigger_state);
+CREATE INDEX idx_qrtz_t_nft_st ON qrtz_triggers (next_fire_time, trigger_state);
+CREATE INDEX idx_qrtz_ft_trig_name ON qrtz_fired_triggers (trigger_name);
+CREATE INDEX idx_qrtz_ft_trig_group ON qrtz_fired_triggers (trigger_group);
+CREATE INDEX idx_qrtz_ft_trig_nm_gp ON qrtz_fired_triggers (sched_name, trigger_name, trigger_group);
+CREATE INDEX idx_qrtz_ft_trig_inst_name ON qrtz_fired_triggers (instance_name);
+CREATE INDEX idx_qrtz_ft_job_name ON qrtz_fired_triggers (job_name);
+CREATE INDEX idx_qrtz_ft_job_group ON qrtz_fired_triggers (job_group);

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -25,17 +26,20 @@ public class CourierAssignmentService {
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
 	private final NotificationService notificationService;
+	private final MessageProducerService messageProducerService;
 	private final Clock clock;
 
 	public CourierAssignmentService(
 			OrderRepository orderRepository,
 			UserRepository userRepository,
 			NotificationService notificationService,
+			MessageProducerService messageProducerService,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.notificationService = notificationService;
+		this.messageProducerService = messageProducerService;
 		this.clock = clock;
 	}
 
@@ -74,17 +78,14 @@ public class CourierAssignmentService {
 		courier.setAvailable(false);
 		orderRepository.save(order);
 		userRepository.save(courier);
-
-		String distanceSuffix = order.getDeliveryDistanceKm() != null
-				? " (distance from shop: ~" + order.getDeliveryDistanceKm() + " km)"
-				: "";
+		messageProducerService.sendBitrixOrderSync(order);
 
 		
 		notificationService.createNotification(
 				courier,
 				order,
 				NotificationType.COURIER_ASSIGNED,
-				"You have been assigned to order " + order.getId() + distanceSuffix
+				"You have been assigned to order " + order.getId()
 		);
 		notificationService.createNotification(
 				order.getCustomer(),

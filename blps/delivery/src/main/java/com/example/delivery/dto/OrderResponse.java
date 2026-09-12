@@ -13,9 +13,7 @@ public class OrderResponse {
 	private Long courierId;
 	private String deliveryAddress;
 	private OffsetDateTime requestedDeliveryTime;
-	private Long estimatedDeliveryMinutes;
 	private OffsetDateTime deliveryTime;
-	private Double deliveryDistanceKm;
 	private OffsetDateTime createdAt;
 	private OffsetDateTime updatedAt;
 	private OffsetDateTime shopRespondedAt;
@@ -32,9 +30,7 @@ public class OrderResponse {
 			Long courierId,
 			String deliveryAddress,
 			OffsetDateTime requestedDeliveryTime,
-			Long estimatedDeliveryMinutes,
 			OffsetDateTime deliveryTime,
-			Double deliveryDistanceKm,
 			OffsetDateTime createdAt,
 			OffsetDateTime updatedAt,
 			OffsetDateTime shopRespondedAt,
@@ -50,9 +46,7 @@ public class OrderResponse {
 		this.courierId = courierId;
 		this.deliveryAddress = deliveryAddress;
 		this.requestedDeliveryTime = requestedDeliveryTime;
-		this.estimatedDeliveryMinutes = estimatedDeliveryMinutes;
 		this.deliveryTime = deliveryTime;
-		this.deliveryDistanceKm = deliveryDistanceKm;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.shopRespondedAt = shopRespondedAt;
@@ -90,16 +84,8 @@ public class OrderResponse {
 		return requestedDeliveryTime;
 	}
 
-	public Long getEstimatedDeliveryMinutes() {
-		return estimatedDeliveryMinutes;
-	}
-
 	public OffsetDateTime getDeliveryTime() {
 		return deliveryTime;
-	}
-
-	public Double getDeliveryDistanceKm() {
-		return deliveryDistanceKm;
 	}
 
 	public OffsetDateTime getCreatedAt() {

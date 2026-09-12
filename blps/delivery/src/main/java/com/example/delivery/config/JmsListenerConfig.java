@@ -18,12 +18,31 @@ public class JmsListenerConfig {
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
             ConnectionFactory connectionFactory,
             MessageConverter messageConverter) {
-        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(messageConverter);
+        DefaultJmsListenerContainerFactory factory = createFactory(
+                connectionFactory, messageConverter);
         factory.setConcurrency("1-5");
         factory.setSessionTransacted(false);
         factory.setSessionAcknowledgeMode(jakarta.jms.Session.AUTO_ACKNOWLEDGE);
+        return factory;
+    }
+
+    @Bean
+    public DefaultJmsListenerContainerFactory bitrixJmsListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter messageConverter) {
+        DefaultJmsListenerContainerFactory factory = createFactory(
+                connectionFactory, messageConverter);
+        factory.setConcurrency("1");
+        factory.setSessionTransacted(true);
+        return factory;
+    }
+
+    private DefaultJmsListenerContainerFactory createFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter messageConverter) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(messageConverter);
         factory.setCacheLevelName("CACHE_NONE");
         return factory;
     }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -29,14 +30,17 @@ public class ShopTimeoutJob implements Job {
 
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
+    private final MessageProducerService messageProducerService;
     private final Clock clock;
 
     public ShopTimeoutJob(
             OrderRepository orderRepository,
             NotificationService notificationService,
+            MessageProducerService messageProducerService,
             Clock clock) {
         this.orderRepository = orderRepository;
         this.notificationService = notificationService;
+        this.messageProducerService = messageProducerService;
         this.clock = clock;
     }
 
@@ -77,6 +81,7 @@ public class ShopTimeoutJob implements Job {
         order.setShopRespondedAt(now);
         order.setCancelledAt(now);
         orderRepository.save(order);
+        messageProducerService.sendBitrixOrderSync(order);
 
         notificationService.createNotification(
                 order.getCustomer(),

@@ -51,9 +51,8 @@ public class Order {
 
 	private OffsetDateTime deliveryTime;
 
-	private Long estimatedDeliveryMinutes;
-
-	private Double deliveryDistanceKm;
+	@Column(unique = true)
+	private Long bitrixDealId;
 
 	@Column(nullable = false)
 	private OffsetDateTime createdAt;
@@ -151,20 +150,12 @@ public class Order {
 		this.deliveryTime = deliveryTime;
 	}
 
-	public Long getEstimatedDeliveryMinutes() {
-		return estimatedDeliveryMinutes;
+	public Long getBitrixDealId() {
+		return bitrixDealId;
 	}
 
-	public void setEstimatedDeliveryMinutes(Long estimatedDeliveryMinutes) {
-		this.estimatedDeliveryMinutes = estimatedDeliveryMinutes;
-	}
-
-	public Double getDeliveryDistanceKm() {
-		return deliveryDistanceKm;
-	}
-
-	public void setDeliveryDistanceKm(Double deliveryDistanceKm) {
-		this.deliveryDistanceKm = deliveryDistanceKm;
+	public void setBitrixDealId(Long bitrixDealId) {
+		this.bitrixDealId = bitrixDealId;
 	}
 
 	public OffsetDateTime getCreatedAt() {

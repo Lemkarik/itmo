@@ -11,8 +11,8 @@ import jakarta.resource.cci.ConnectionFactory;
 public class JcaConfig {
 
     @Bean
-    public JndiObjectFactoryBean yandexMapsConnectionFactory(
-            @Value("${app.eis.yandex.connection-factory-jndi-name:java:/eis/YandexMapsConnectionFactory}")
+    public JndiObjectFactoryBean bitrix24ConnectionFactory(
+            @Value("${app.eis.bitrix24.connection-factory-jndi-name:java:/eis/Bitrix24ConnectionFactory}")
             String jndiName) {
         JndiObjectFactoryBean factoryBean = new JndiObjectFactoryBean();
         factoryBean.setJndiName(jndiName);

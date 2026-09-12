@@ -59,6 +59,7 @@ public class ShopService {
 		order.setShopRespondedAt(now);
 		order.setAcceptedAt(now);
 		Order saved = orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(saved);
 
 		
 		notificationService.createNotification(
@@ -92,6 +93,7 @@ public class ShopService {
 		order.setShopRespondedAt(now);
 		order.setCancelledAt(now);
 		Order saved = orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(saved);
 
 		String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
 				? " Reason: " + request.getReason().trim()

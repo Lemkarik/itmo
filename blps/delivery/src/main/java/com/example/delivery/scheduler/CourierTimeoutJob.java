@@ -86,6 +86,7 @@ public class CourierTimeoutJob implements Job {
         order.setStatus(OrderStatus.CANCELLED_NO_COURIER);
         order.setCancelledAt(now);
         orderRepository.save(order);
+        messageProducerService.sendBitrixOrderSync(order);
 
         notificationService.createNotification(
                 order.getCustomer(),

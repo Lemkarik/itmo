@@ -38,6 +38,15 @@ public class MessageProducerService {
         sendAfterCommit("notification.dispatch", msg);
     }
 
+    public void sendBitrixOrderSync(Order order) {
+        OrderEventMessage message = new OrderEventMessage(
+                order.getId(),
+                null,
+                "Synchronize order " + order.getId() + " with Bitrix24"
+        );
+        sendAfterCommit("bitrix.order.sync", message);
+    }
+
     private void sendAfterCommit(String destination, OrderEventMessage message) {
         if (TransactionSynchronizationManager.isActualTransactionActive()
                 && TransactionSynchronizationManager.isSynchronizationActive()) {
