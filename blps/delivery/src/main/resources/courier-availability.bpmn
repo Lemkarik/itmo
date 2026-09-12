@@ -5,8 +5,10 @@
                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
                   id="CourierAvailabilityDefinitions"
-                  targetNamespace="http://example.com/delivery">
-  <bpmn:process id="courier-availability" name="Courier availability" isExecutable="true" camunda:candidateStarterGroups="COURIER">
+                  targetNamespace="http://example.com/delivery"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1">
+  <bpmn:process id="courier-availability" name="Courier availability" isExecutable="true" camunda:candidateStarterGroups="COURIER" camunda:historyTimeToLive="P180D">
     <bpmn:startEvent id="availabilityRequested" name="Set availability" camunda:formRef="courier-availability" camunda:formRefBinding="deployment" camunda:initiator="courierUsername">
       <bpmn:outgoing>Flow_UpdateAvailability</bpmn:outgoing>
     </bpmn:startEvent>

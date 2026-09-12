@@ -47,7 +47,12 @@ public class Order {
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String deliveryAddress;
 
+	private OffsetDateTime requestedDeliveryTime;
+
 	private OffsetDateTime deliveryTime;
+
+	@Column(unique = true)
+	private Long bitrixDealId;
 
 	@Column(nullable = false)
 	private OffsetDateTime createdAt;
@@ -132,12 +137,28 @@ public class Order {
 		this.deliveryAddress = deliveryAddress;
 	}
 
+	public OffsetDateTime getRequestedDeliveryTime() {
+		return requestedDeliveryTime;
+	}
+
+	public void setRequestedDeliveryTime(OffsetDateTime requestedDeliveryTime) {
+		this.requestedDeliveryTime = requestedDeliveryTime;
+	}
+
 	public OffsetDateTime getDeliveryTime() {
 		return deliveryTime;
 	}
 
 	public void setDeliveryTime(OffsetDateTime deliveryTime) {
 		this.deliveryTime = deliveryTime;
+	}
+
+	public Long getBitrixDealId() {
+		return bitrixDealId;
+	}
+
+	public void setBitrixDealId(Long bitrixDealId) {
+		this.bitrixDealId = bitrixDealId;
 	}
 
 	public OffsetDateTime getCreatedAt() {

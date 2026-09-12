@@ -41,14 +41,13 @@ public class CartService {
 		Cart cart = cartRepository.findByCustomerId(customer.getId()).orElseGet(() -> new Cart(customer));
 		List<CartItemResponse> items = cart.getItems().stream()
 				.map(item -> new CartItemResponse(
-						item.getId(),
 						item.getShopItem().getId(),
 						item.getProductName(),
 						item.getQuantity(),
 						item.getUnitPrice()
 				))
 				.toList();
-		return new CartResponse(customer.getId(), items);
+		return new CartResponse(items);
 	}
 
 	@Transactional
@@ -135,13 +134,12 @@ public class CartService {
 	private CartResponse toResponse(Cart cart) {
 		List<CartItemResponse> items = cart.getItems().stream()
 				.map(item -> new CartItemResponse(
-						item.getId(),
 						item.getShopItem().getId(),
 						item.getProductName(),
 						item.getQuantity(),
 						item.getUnitPrice()
 				))
 				.toList();
-		return new CartResponse(cart.getCustomer().getId(), items);
+		return new CartResponse(items);
 	}
 }

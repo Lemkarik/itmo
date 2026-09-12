@@ -9,4 +9,3 @@ public record AmqpProperties(
         String password
 ) {
 }
-

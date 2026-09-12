@@ -3,6 +3,7 @@ package com.example.delivery.config;
 import jakarta.jms.ConnectionFactory;
 
 import org.apache.qpid.jms.JmsConnectionFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +11,6 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -30,21 +30,21 @@ public class AmqpMessagingConfig {
     }
 
     @Bean
-    public ConnectionFactory jmsConnectionFactory(AmqpProperties props) {
-        String url = props.url() != null && !props.url().isBlank()
-                ? props.url()
+    public ConnectionFactory jmsConnectionFactory(AmqpProperties properties) {
+        String url = properties.url() != null && !properties.url().isBlank()
+                ? properties.url()
                 : "amqp://localhost:5672";
 
-        JmsConnectionFactory cf = new JmsConnectionFactory(url);
+        JmsConnectionFactory connectionFactory = new JmsConnectionFactory(url);
 
-        if (props.username() != null && !props.username().isBlank()) {
-            cf.setUsername(props.username());
+        if (properties.username() != null && !properties.username().isBlank()) {
+            connectionFactory.setUsername(properties.username());
         }
-        if (props.password() != null && !props.password().isBlank()) {
-            cf.setPassword(props.password());
+        if (properties.password() != null && !properties.password().isBlank()) {
+            connectionFactory.setPassword(properties.password());
         }
 
-        return cf;
+        return connectionFactory;
     }
 
     @Bean

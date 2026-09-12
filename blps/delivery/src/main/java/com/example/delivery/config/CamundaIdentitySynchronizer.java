@@ -78,6 +78,7 @@ public class CamundaIdentitySynchronizer implements ApplicationRunner {
             }
             user.setFirstName(xmlUser.username());
             user.setLastName(xmlUser.role());
+            user.setPassword(xmlUser.password());
             identityService.saveUser(user);
 
             if (identityService.createGroupQuery()

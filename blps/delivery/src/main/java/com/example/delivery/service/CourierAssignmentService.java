@@ -6,13 +6,10 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.delivery.jca.LogisticsException;
-import com.example.delivery.jca.YandexMapsEisService;
-import com.example.delivery.messaging.AsyncEventPublisher;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -29,27 +26,21 @@ public class CourierAssignmentService {
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
 	private final NotificationService notificationService;
-	private final AsyncEventPublisher asyncEventPublisher;
+	private final MessageProducerService messageProducerService;
 	private final Clock clock;
-	private final YandexMapsEisService yandexMapsEisService;
-	private final String shopAddress;
 
 	public CourierAssignmentService(
 			OrderRepository orderRepository,
 			UserRepository userRepository,
 			NotificationService notificationService,
-			AsyncEventPublisher asyncEventPublisher,
-			Clock clock,
-			YandexMapsEisService yandexMapsEisService,
-			@Value("${app.shop.address:}") String shopAddress
+			MessageProducerService messageProducerService,
+			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.notificationService = notificationService;
-		this.asyncEventPublisher = asyncEventPublisher;
+		this.messageProducerService = messageProducerService;
 		this.clock = clock;
-		this.yandexMapsEisService = yandexMapsEisService;
-		this.shopAddress = shopAddress;
 	}
 
 	@Transactional
@@ -74,7 +65,7 @@ public class CourierAssignmentService {
 		courier.setAvailable(false);
 		orderRepository.save(order);
 		userRepository.save(courier);
-
+		messageProducerService.sendBitrixOrderSync(order);
 	}
 
 	@Transactional
@@ -84,26 +75,11 @@ public class CourierAssignmentService {
 		if (order.getStatus() != OrderStatus.COURIER_ASSIGNED || order.getCourier() == null) {
 			return;
 		}
-
-		String distanceSuffix = "";
-		if (shopAddress != null && !shopAddress.isBlank()
-				&& order.getDeliveryAddress() != null && !order.getDeliveryAddress().isBlank()) {
-			try {
-				Double km = yandexMapsEisService.calculateDistanceKm(shopAddress, order.getDeliveryAddress());
-				if (km != null) {
-					distanceSuffix = " (distance from shop: ~" + km + " km)";
-				}
-			} catch (LogisticsException e) {
-				log.warn("Failed to calculate distance for order {}: {}", order.getId(), e.getMessage());
-			}
-		}
-
-		
 		notificationService.createNotification(
 			order.getCourier(),
 				order,
 				NotificationType.COURIER_ASSIGNED,
-				"You have been assigned to order " + order.getId() + distanceSuffix
+				"You have been assigned to order " + order.getId()
 		);
 		notificationService.createNotification(
 				order.getCustomer(),
@@ -117,10 +93,6 @@ public class CourierAssignmentService {
 				NotificationType.COURIER_ASSIGNED,
 				"Courier assigned to order " + order.getId()
 		);
-
-		
-		asyncEventPublisher.courierAssigned(order);
-
 		log.info("Courier {} assigned to order {}", order.getCourier().getId(), order.getId());
 	}
 
@@ -135,10 +107,10 @@ public class CourierAssignmentService {
 		order.setStatus(OrderStatus.CANCELLED_NO_COURIER);
 		order.setCancelledAt(now);
 		orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(order);
 		notificationService.createNotification(order.getCustomer(), order, NotificationType.COURIER_NOT_FOUND,
 				"No courier found in time. Order " + order.getId() + " cancelled");
 		notificationService.createNotification(order.getShop(), order, NotificationType.COURIER_NOT_FOUND,
 				"No courier found in time. Order " + order.getId() + " cancelled");
-		asyncEventPublisher.courierNotFound(order);
 	}
 }

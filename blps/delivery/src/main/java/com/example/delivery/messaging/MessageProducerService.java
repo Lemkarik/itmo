@@ -2,12 +2,12 @@ package com.example.delivery.messaging;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.example.delivery.model.Order;
-import com.example.delivery.model.OrderStatus;
 
 
 @Service
@@ -21,47 +21,63 @@ public class MessageProducerService {
         this.jmsTemplate = jmsTemplate;
     }
 
-    
     public void sendCourierAssignmentRequest(Order order) {
         OrderEventMessage msg = new OrderEventMessage(
                 order.getId(),
-                order.getCustomer().getId(),
-                order.getShop().getId(),
-                OrderStatus.ACCEPTED_WAITING_COURIER,
-                order.getDeliveryAddress(),
+                null,
                 "New courier assignment request for order " + order.getId()
         );
-        jmsTemplate.convertAndSend("courier.assignment", msg);
-        log.info("Sent courier.assignment message for order {}", order.getId());
+        sendAfterCommit("courier.assignment", msg);
     }
 
-    
     public void sendNotificationDispatch(Long recipientId, Long orderId,
                                           String type, String message) {
         OrderEventMessage msg = new OrderEventMessage(
-                orderId, null, null, null, null, message
+                orderId, recipientId, message
         );
-        msg.setCustomerId(recipientId);
-        jmsTemplate.convertAndSend("notification.dispatch", msg);
-        log.info("Sent notification.dispatch message for order {} to recipient {}",
-                orderId, recipientId);
+        sendAfterCommit("notification.dispatch", msg);
     }
 
-    
-    public void sendExternalLogisticsEvent(Order order, String eventDescription) {
-        OrderEventMessage msg = new OrderEventMessage(
+    public void sendBitrixOrderSync(Order order) {
+        OrderEventMessage message = new OrderEventMessage(
                 order.getId(),
-                order.getCustomer().getId(),
-                order.getShop().getId(),
-                order.getStatus(),
-                order.getDeliveryAddress(),
-                eventDescription
+                null,
+                "Synchronize order " + order.getId() + " with Bitrix24"
         );
-        if (order.getCourier() != null) {
-            msg.setCourierId(order.getCourier().getId());
+        sendAfterCommit("bitrix.order.sync", message);
+    }
+
+    public void sendCourierAssignedProcessEvent(Order order) {
+        OrderEventMessage message = new OrderEventMessage(
+                order.getId(),
+                null,
+                "Correlate courier assignment for order " + order.getId()
+        );
+        sendAfterCommit("process.courier-assigned", message);
+    }
+
+    private void sendAfterCommit(String destination, OrderEventMessage message) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        send(destination, message);
+                    } catch (RuntimeException exception) {
+                        log.error("Failed to send {} message for order {} after transaction commit",
+                                destination, message.getOrderId(), exception);
+                    }
+                }
+            });
+            return;
         }
-        jmsTemplate.convertAndSend("external.logistics", msg);
-        log.info("Sent external.logistics message for order {}: {}",
-                order.getId(), eventDescription);
+
+        send(destination, message);
+    }
+
+    private void send(String destination, OrderEventMessage message) {
+        jmsTemplate.convertAndSend(destination, message);
+        log.info("Sent {} message for order {}", destination, message.getOrderId());
     }
 }

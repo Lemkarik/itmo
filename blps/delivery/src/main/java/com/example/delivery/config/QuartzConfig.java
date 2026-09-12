@@ -14,7 +14,6 @@ import com.example.delivery.scheduler.CourierTimeoutJob;
 public class QuartzConfig {
 
     private static final long ONE_MINUTE_MS = 60_000L;
-
     
     @Bean
     public JobDetailFactoryBean courierTimeoutJobDetail() {
@@ -32,7 +31,7 @@ public class QuartzConfig {
     public SimpleTriggerFactoryBean courierTimeoutTrigger(JobDetail courierTimeoutJobDetail) {
         SimpleTriggerFactoryBean factory = new SimpleTriggerFactoryBean();
         factory.setJobDetail(courierTimeoutJobDetail);
-        factory.setStartDelay(15_000L);
+        factory.setStartDelay(0L);
         factory.setRepeatInterval(ONE_MINUTE_MS);
         factory.setName("CourierTimeoutTrigger");
         factory.setGroup("DeliveryTriggers");

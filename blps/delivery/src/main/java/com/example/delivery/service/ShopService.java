@@ -5,14 +5,13 @@ import java.time.OffsetDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.delivery.dto.OrderDecisionRequest;
 import com.example.delivery.exception.ConflictException;
 import com.example.delivery.exception.NotFoundException;
-import com.example.delivery.messaging.AsyncEventPublisher;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.NotificationType;
 import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
@@ -27,25 +26,24 @@ public class ShopService {
 	private final OrderRepository orderRepository;
 	private final UserService userService;
 	private final NotificationService notificationService;
-	private final AsyncEventPublisher asyncEventPublisher;
+	private final MessageProducerService messageProducerService;
 	private final Clock clock;
 
 	public ShopService(
 			OrderRepository orderRepository,
 			UserService userService,
 			NotificationService notificationService,
-			AsyncEventPublisher asyncEventPublisher,
+			MessageProducerService messageProducerService,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userService = userService;
 		this.notificationService = notificationService;
-		this.asyncEventPublisher = asyncEventPublisher;
+		this.messageProducerService = messageProducerService;
 		this.clock = clock;
 	}
 
 	@Transactional
-	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_ORDER_STATUS')")
 	public Order acceptOrder(Long orderId) {
 		User shop = userService.getDefaultShop();
 		Order order = orderRepository.findById(orderId)
@@ -59,6 +57,7 @@ public class ShopService {
 		order.setShopRespondedAt(now);
 		order.setAcceptedAt(now);
 		Order saved = orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(saved);
 
 		
 		notificationService.createNotification(
@@ -67,15 +66,12 @@ public class ShopService {
 				NotificationType.SHOP_ACCEPTED,
 				"Shop accepted order " + saved.getId()
 		);
-
-
 		log.info("Order {} accepted by shop", orderId);
 
 		return saved;
 	}
 
 	@Transactional
-	@PreAuthorize("hasAuthority('PRIVILEGE_MANAGE_ORDER_STATUS')")
 	public Order declineOrder(Long orderId, OrderDecisionRequest request) {
 		User shop = userService.getDefaultShop();
 		Order order = orderRepository.findById(orderId)
@@ -89,6 +85,7 @@ public class ShopService {
 		order.setShopRespondedAt(now);
 		order.setCancelledAt(now);
 		Order saved = orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(saved);
 
 		String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
 				? " Reason: " + request.getReason().trim()
@@ -106,7 +103,6 @@ public class ShopService {
 				NotificationType.SHOP_DECLINED,
 				"Order " + saved.getId() + " declined." + reason
 		);
-
 		return saved;
 	}
 
@@ -122,6 +118,7 @@ public class ShopService {
 		order.setShopRespondedAt(now);
 		order.setCancelledAt(now);
 		Order saved = orderRepository.save(order);
+		messageProducerService.sendBitrixOrderSync(saved);
 		notificationService.createNotification(order.getCustomer(), saved, NotificationType.SHOP_DECLINED,
 				"Shop did not respond in time. Order " + saved.getId() + " declined automatically");
 		notificationService.createNotification(order.getShop(), saved, NotificationType.SHOP_DECLINED,

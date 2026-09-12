@@ -2,6 +2,7 @@
 <process-application xmlns="http://www.camunda.org/schema/1.0/ProcessApplication"
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <process-archive name="delivery-order">
+    <process-engine>default</process-engine>
     <resource>delivery-order.bpmn</resource>
     <resource>courier-availability.bpmn</resource>
     <resource>start-shopping.form</resource>
@@ -13,6 +14,7 @@
     <resource>availability-result.form</resource>
     <properties>
       <property name="isDeleteUponUndeploy">false</property>
+      <property name="isScanForProcessDefinitions">false</property>
     </properties>
   </process-archive>
 </process-application>

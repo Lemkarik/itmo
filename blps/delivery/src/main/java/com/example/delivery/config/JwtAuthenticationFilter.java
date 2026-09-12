@@ -38,8 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return "/api/auth/login".equals(path)
-                || "/api/auth/logout".equals(path)
-                || "/api/auth/camunda-token".equals(path);
+                || "/api/auth/logout".equals(path);
     }
 
     @Override

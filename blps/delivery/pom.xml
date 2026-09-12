@@ -52,28 +52,34 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Embedded Camunda 7 engine and Tasklist web application -->
+		<!-- Camunda is provided by the standalone/shared engine installed in WildFly. -->
 		<dependency>
-			<groupId>org.camunda.bpm.springboot</groupId>
-			<artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
+			<groupId>org.camunda.bpm</groupId>
+			<artifactId>camunda-engine</artifactId>
 			<version>${camunda.version}</version>
-		</dependency>
-
-		<!-- JMS and ActiveMQ Artemis (embedded broker) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-artemis</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>artemis-jakarta-server</artifactId>
+			<groupId>org.camunda.bpm</groupId>
+			<artifactId>camunda-engine-spring</artifactId>
+			<version>${camunda.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.camunda.bpm</groupId>
+					<artifactId>camunda-engine</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
-		<!-- AMQP 1.0 protocol support via Qpid JMS (for external client access) -->
+		<!-- JMS over AMQP 1.0; Apache ActiveMQ runs as a separate broker service. -->
 		<dependency>
 			<groupId>org.apache.qpid</groupId>
 			<artifactId>qpid-jms-client</artifactId>
 			<version>2.6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jms</artifactId>
 		</dependency>
 
 		<!-- Jackson for JSON message serialization -->
@@ -97,6 +103,7 @@
 			<groupId>jakarta.resource</groupId>
 			<artifactId>jakarta.resource-api</artifactId>
 			<version>2.1.0</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- No additional Jakarta APIs needed for JCA in this context -->
@@ -106,11 +113,13 @@
 			<groupId>org.jboss.narayana.jta</groupId>
 			<artifactId>narayana-jta</artifactId>
 			<version>7.0.0.Final</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss</groupId>
 			<artifactId>jboss-transaction-spi</artifactId>
 			<version>8.0.0.Final</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -177,10 +186,28 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>worker-jar</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>worker</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<layout>WAR</layout>
+					<mainClass>com.example.delivery.DeliveryApplication</mainClass>
+					<jvmArguments>-Djava.security.manager=allow</jvmArguments>
 					<excludes>
 						<exclude>
 									<groupId>org.projectlombok</groupId>
@@ -188,6 +215,41 @@
 						</exclude>
 					</excludes>
 				</configuration>
+				<executions>
+					<execution>
+						<id>repackage-worker</id>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+						<configuration>
+							<classifier>worker</classifier>
+							<mainClass>com.example.delivery.worker.DeliveryWorkerApplication</mainClass>
+							<layout>JAR</layout>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>name-worker-executable-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<copy
+									file="${project.build.directory}/${project.build.finalName}-worker.war"
+									tofile="${project.build.directory}/${project.build.finalName}-worker.jar"
+									overwrite="true"/>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -23,17 +22,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public WebSecurityCustomizer camundaWebSecurityCustomizer() {
-        return web -> web.ignoring().requestMatchers("/camunda/**");
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/camunda-token").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/v3/api-docs.yaml").permitAll()
                 .requestMatchers("/").permitAll()

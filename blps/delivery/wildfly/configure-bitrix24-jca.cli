@@ -1,0 +1,19 @@
+if (outcome == success) of /subsystem=resource-adapters/resource-adapter=bitrix24:read-resource
+    /subsystem=resource-adapters/resource-adapter=bitrix24:remove
+end-if
+
+if (outcome == success) of /deployment=bitrix24-jca-1.0.0.rar:read-resource
+    undeploy bitrix24-jca-1.0.0.rar
+end-if
+
+deploy bitrix24-jca/target/bitrix24-jca-1.0.0.rar --force
+
+/subsystem=resource-adapters/resource-adapter=bitrix24:add(archive=bitrix24-jca-1.0.0.rar,transaction-support=NoTransaction)
+/subsystem=resource-adapters/resource-adapter=bitrix24/connection-definitions=Bitrix24ConnectionFactory:add(class-name=com.example.delivery.bitrix.ra.Bitrix24ManagedConnectionFactory,jndi-name="java:/eis/Bitrix24ConnectionFactory",enabled=true,use-java-context=true,min-pool-size=1,max-pool-size=10)
+/subsystem=resource-adapters/resource-adapter=bitrix24/connection-definitions=Bitrix24ConnectionFactory/config-properties=webhookUrl:add(value="${env.BITRIX24_WEBHOOK_URL}")
+/subsystem=resource-adapters/resource-adapter=bitrix24/connection-definitions=Bitrix24ConnectionFactory/config-properties=entityTypeId:add(value=2)
+/subsystem=resource-adapters/resource-adapter=bitrix24/connection-definitions=Bitrix24ConnectionFactory/config-properties=categoryId:add(value=1)
+/subsystem=resource-adapters/resource-adapter=bitrix24/connection-definitions=Bitrix24ConnectionFactory/config-properties=currencyId:add(value="${env.BITRIX24_CURRENCY_ID:USD}")
+/subsystem=resource-adapters/resource-adapter=bitrix24:activate
+
+reload

@@ -12,6 +12,7 @@ public class OrderResponse {
 	private Long shopId;
 	private Long courierId;
 	private String deliveryAddress;
+	private OffsetDateTime requestedDeliveryTime;
 	private OffsetDateTime deliveryTime;
 	private OffsetDateTime createdAt;
 	private OffsetDateTime updatedAt;
@@ -28,6 +29,7 @@ public class OrderResponse {
 			Long shopId,
 			Long courierId,
 			String deliveryAddress,
+			OffsetDateTime requestedDeliveryTime,
 			OffsetDateTime deliveryTime,
 			OffsetDateTime createdAt,
 			OffsetDateTime updatedAt,
@@ -43,6 +45,7 @@ public class OrderResponse {
 		this.shopId = shopId;
 		this.courierId = courierId;
 		this.deliveryAddress = deliveryAddress;
+		this.requestedDeliveryTime = requestedDeliveryTime;
 		this.deliveryTime = deliveryTime;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
@@ -75,6 +78,10 @@ public class OrderResponse {
 
 	public String getDeliveryAddress() {
 		return deliveryAddress;
+	}
+
+	public OffsetDateTime getRequestedDeliveryTime() {
+		return requestedDeliveryTime;
 	}
 
 	public OffsetDateTime getDeliveryTime() {

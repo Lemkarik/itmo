@@ -11,8 +11,6 @@ import com.example.delivery.model.Order;
 import com.example.delivery.model.OrderStatus;
 import com.example.delivery.repository.OrderRepository;
 import com.example.delivery.service.CourierAssignmentService;
-import com.example.delivery.process.DeliveryProcessService;
-
 
 @Component
 @ConditionalOnProperty(name = "app.features.listener.courier-assignment", havingValue = "true", matchIfMissing = true)
@@ -22,15 +20,15 @@ public class CourierAssignmentListener {
 
     private final OrderRepository orderRepository;
     private final CourierAssignmentService courierAssignmentService;
-    private final DeliveryProcessService deliveryProcessService;
+    private final MessageProducerService messageProducerService;
 
     public CourierAssignmentListener(
             OrderRepository orderRepository,
             CourierAssignmentService courierAssignmentService,
-            DeliveryProcessService deliveryProcessService) {
+            MessageProducerService messageProducerService) {
         this.orderRepository = orderRepository;
         this.courierAssignmentService = courierAssignmentService;
-        this.deliveryProcessService = deliveryProcessService;
+        this.messageProducerService = messageProducerService;
     }
 
     @JmsListener(destination = "courier.assignment", concurrency = "1-3")
@@ -55,7 +53,7 @@ public class CourierAssignmentListener {
 
             boolean assigned = courierAssignmentService.tryAssignCourier(order);
             if (assigned) {
-                deliveryProcessService.correlateCourierAssigned(order);
+                messageProducerService.sendCourierAssignedProcessEvent(order);
                 log.info("Courier assigned to order {} successfully", order.getId());
             } else {
                 log.info("No courier available for order {} at this time, will retry later",

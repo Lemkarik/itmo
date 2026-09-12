@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="DeliveryDefinitions" targetNamespace="http://example.com/delivery" exporter="Camunda Modeler" exporterVersion="5.50.1">
   <bpmn:message id="CourierAssignedMessage" name="courierAssigned" />
-  <bpmn:process id="delivery-order" name="Delivery order" isExecutable="true" camunda:candidateStarterGroups="CUSTOMER">
+  <bpmn:process id="delivery-order" name="Delivery order" isExecutable="true" camunda:candidateStarterGroups="CUSTOMER" camunda:historyTimeToLive="P180D">
     <bpmn:startEvent id="startShopping" name="Start shopping" camunda:formRef="start-shopping" camunda:formRefBinding="deployment" camunda:initiator="customerUsername">
       <bpmn:outgoing>Flow_InitializeShopping</bpmn:outgoing>
     </bpmn:startEvent>

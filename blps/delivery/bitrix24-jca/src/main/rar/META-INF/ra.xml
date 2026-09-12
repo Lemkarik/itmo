@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<connector xmlns="https://jakarta.ee/xml/ns/jakartaee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/connector_2_1.xsd"
+           version="2.1">
+    <display-name>Bitrix24 CRM JCA Resource Adapter</display-name>
+    <vendor-name>Delivery Service</vendor-name>
+    <eis-type>Bitrix24 CRM REST API</eis-type>
+    <resourceadapter-version>1.0.0</resourceadapter-version>
+    <resourceadapter>
+        <resourceadapter-class>com.example.delivery.bitrix.ra.Bitrix24ResourceAdapter</resourceadapter-class>
+        <outbound-resourceadapter>
+            <connection-definition>
+                <managedconnectionfactory-class>com.example.delivery.bitrix.ra.Bitrix24ManagedConnectionFactory</managedconnectionfactory-class>
+                <config-property>
+                    <config-property-name>webhookUrl</config-property-name>
+                    <config-property-type>java.lang.String</config-property-type>
+                </config-property>
+                <config-property>
+                    <config-property-name>entityTypeId</config-property-name>
+                    <config-property-type>java.lang.Integer</config-property-type>
+                    <config-property-value>2</config-property-value>
+                </config-property>
+                <config-property>
+                    <config-property-name>categoryId</config-property-name>
+                    <config-property-type>java.lang.Integer</config-property-type>
+                    <config-property-value>1</config-property-value>
+                </config-property>
+                <config-property>
+                    <config-property-name>currencyId</config-property-name>
+                    <config-property-type>java.lang.String</config-property-type>
+                    <config-property-value>USD</config-property-value>
+                </config-property>
+                <connectionfactory-interface>jakarta.resource.cci.ConnectionFactory</connectionfactory-interface>
+                <connectionfactory-impl-class>com.example.delivery.bitrix.ra.Bitrix24ConnectionFactory</connectionfactory-impl-class>
+                <connection-interface>jakarta.resource.cci.Connection</connection-interface>
+                <connection-impl-class>com.example.delivery.bitrix.ra.Bitrix24Connection</connection-impl-class>
+            </connection-definition>
+            <transaction-support>NoTransaction</transaction-support>
+            <reauthentication-support>false</reauthentication-support>
+        </outbound-resourceadapter>
+    </resourceadapter>
+</connector>

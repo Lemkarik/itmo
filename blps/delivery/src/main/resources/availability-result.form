@@ -9,5 +9,9 @@
   ],
   "type": "default",
   "id": "availability-result",
-  "schemaVersion": 8
+  "schemaVersion": 8,
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.50.1"
+  }
 }

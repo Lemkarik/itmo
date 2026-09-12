@@ -5,18 +5,15 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.stereotype.Component;
 
 import com.example.delivery.dto.OrderDecisionRequest;
-import com.example.delivery.messaging.AsyncEventPublisher;
 import com.example.delivery.model.Order;
 import com.example.delivery.service.ShopService;
 
 @Component("shopDeclinedDelegate")
 public class ShopDeclinedDelegate implements JavaDelegate {
     private final ShopService shopService;
-    private final AsyncEventPublisher asyncEventPublisher;
 
-    public ShopDeclinedDelegate(ShopService shopService, AsyncEventPublisher asyncEventPublisher) {
+    public ShopDeclinedDelegate(ShopService shopService) {
         this.shopService = shopService;
-        this.asyncEventPublisher = asyncEventPublisher;
     }
 
     @Override
@@ -24,7 +21,6 @@ public class ShopDeclinedDelegate implements JavaDelegate {
         OrderDecisionRequest request = new OrderDecisionRequest();
         request.setReason((String) execution.getVariable("declineReason"));
         Order order = shopService.declineOrder(orderId(execution), request);
-        asyncEventPublisher.orderDeclined(order);
         execution.setVariable("orderResultSummary",
                 "Order #" + order.getId() + " was declined by the shop"
                         + (request.getReason() == null || request.getReason().isBlank()

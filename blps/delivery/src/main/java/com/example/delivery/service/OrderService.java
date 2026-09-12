@@ -16,7 +16,7 @@ import com.example.delivery.dto.OrderResponse;
 import com.example.delivery.dto.PaginationRequest;
 import com.example.delivery.exception.BadRequestException;
 import com.example.delivery.exception.NotFoundException;
-import com.example.delivery.messaging.AsyncEventPublisher;
+import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.Cart;
 import com.example.delivery.model.CartItem;
 import com.example.delivery.model.NotificationType;
@@ -36,8 +36,7 @@ public class OrderService {
 	private final UserService userService;
 	private final CartService cartService;
 	private final NotificationService notificationService;
-	private final AsyncEventPublisher asyncEventPublisher;
-	private final DeliveryEstimationService deliveryEstimationService;
+	private final MessageProducerService messageProducerService;
 	private final Clock clock;
 
 	public OrderService(
@@ -45,16 +44,14 @@ public class OrderService {
 			UserService userService,
 			CartService cartService,
 			NotificationService notificationService,
-			AsyncEventPublisher asyncEventPublisher,
-			DeliveryEstimationService deliveryEstimationService,
+			MessageProducerService messageProducerService,
 			Clock clock
 	) {
 		this.orderRepository = orderRepository;
 		this.userService = userService;
 		this.cartService = cartService;
 		this.notificationService = notificationService;
-		this.asyncEventPublisher = asyncEventPublisher;
-		this.deliveryEstimationService = deliveryEstimationService;
+		this.messageProducerService = messageProducerService;
 		this.clock = clock;
 	}
 
@@ -84,16 +81,10 @@ public class OrderService {
 		order.setShop(shop);
 		order.setStatus(OrderStatus.PENDING_SHOP);
 		order.setDeliveryAddress(request.getDeliveryAddress().trim());
+		order.setRequestedDeliveryTime(request.getDeliveryTime());
 		order.setDeliveryTime(request.getDeliveryTime());
 		order.setCreatedAt(now);
 		order.setUpdatedAt(now);
-
-		DeliveryEstimationService.DeliveryTimeDecision deliveryDecision =
-				deliveryEstimationService.decideDeliveryTime(
-						now,
-						request.getDeliveryTime(),
-						order.getDeliveryAddress());
-		order.setDeliveryTime(deliveryDecision.chosen());
 
 		for (CartItem cartItem : cart.getItems()) {
 			if (!cartItem.getShopItem().getShop().getId().equals(shop.getId())) {
@@ -111,6 +102,7 @@ public class OrderService {
 
 		Order saved = orderRepository.save(order);
 		cartService.clearCart(cart);
+		messageProducerService.sendBitrixOrderSync(saved);
 
 		
 		notificationService.createNotification(
@@ -125,15 +117,7 @@ public class OrderService {
 				NotificationType.ORDER_CREATED,
 				"Order " + saved.getId() + " created and sent to shop"
 						+ (saved.getDeliveryTime() != null ? ". Delivery by: " + saved.getDeliveryTime() : "")
-						+ (deliveryDecision.adjustedFromRequested()
-								? " (requested time was too soon and was adjusted)"
-								: (deliveryDecision.estimatedEarliest() != null && request.getDeliveryTime() != null
-										? " (earliest ETA: " + deliveryDecision.estimatedEarliest() + ")"
-										: ""))
 		);
-
-		
-		asyncEventPublisher.orderCreated(saved);
 
 		log.info("Order {} created by customer {}", saved.getId(), customerId);
 
@@ -217,6 +201,7 @@ public class OrderService {
 				order.getShop().getId(),
 				courierId,
 				order.getDeliveryAddress(),
+				order.getRequestedDeliveryTime(),
 				order.getDeliveryTime(),
 				order.getCreatedAt(),
 				order.getUpdatedAt(),
