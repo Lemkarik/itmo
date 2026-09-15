@@ -20,6 +20,16 @@
       "id": "Field_1ly9wc4"
     },
     {
+      "label": "Validation error",
+      "type": "textarea",
+      "key": "checkoutError",
+      "disabled": true,
+      "conditional": {
+        "hide": "=checkoutError = null or checkoutError = \"\""
+      },
+      "id": "Field_checkout_error"
+    },
+    {
       "label": "Action",
       "values": [
         {
@@ -49,8 +59,11 @@
           "label": "Product ID",
           "type": "number",
           "key": "shopItemId",
+          "decimalDigits": 0,
+          "increment": 1,
           "validate": {
-            "required": true
+            "required": true,
+            "min": 1
           },
           "id": "Field_1t2cedv"
         },
@@ -58,6 +71,8 @@
           "label": "Quantity",
           "type": "number",
           "key": "quantity",
+          "decimalDigits": 0,
+          "increment": 1,
           "validate": {
             "required": true,
             "min": 1
@@ -79,8 +94,11 @@
           "label": "Product ID",
           "type": "number",
           "key": "removeShopItemId",
+          "decimalDigits": 0,
+          "increment": 1,
           "validate": {
-            "required": true
+            "required": true,
+            "min": 1
           },
           "id": "Field_1bbtedu"
         }
@@ -112,6 +130,9 @@
           "dateLabel": "Delivery date",
           "timeLabel": "Delivery time",
           "disallowPassedDates": true,
+          "validate": {
+            "required": true
+          },
           "timeSerializingFormat": "utc_normalized",
           "timeInterval": 15,
           "use24h": true,

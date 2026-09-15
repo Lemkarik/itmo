@@ -3,10 +3,12 @@ package com.example.delivery.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 
 import com.example.delivery.service.BaselineDataService;
 
 @Component
+@Order(0)
 public class DataInitializer implements CommandLineRunner {
 
 	private final BaselineDataService baselineDataService;

@@ -5,7 +5,7 @@
     <bpmn:startEvent id="startShopping" name="Start shopping" camunda:formRef="start-shopping" camunda:formRefBinding="deployment" camunda:initiator="customerUsername">
       <bpmn:outgoing>Flow_InitializeShopping</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:serviceTask id="initializeShopping" name="Load catalog and cart" camunda:delegateExpression="${initializeShoppingDelegate}">
+    <bpmn:serviceTask id="initializeShopping" name="Load catalog and cart" camunda:type="external" camunda:topic="delivery-initialize-shopping">
       <bpmn:incoming>Flow_InitializeShopping</bpmn:incoming>
       <bpmn:outgoing>Flow_DirectCheckoutGateway</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -19,7 +19,7 @@
       <bpmn:incoming>Flow_ContinueShopping</bpmn:incoming>
       <bpmn:outgoing>Flow_ApplyCartAction</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:serviceTask id="applyCartAction" name="Apply cart action" camunda:delegateExpression="${applyCartActionDelegate}">
+    <bpmn:serviceTask id="applyCartAction" name="Apply cart action" camunda:type="external" camunda:topic="delivery-apply-cart-action">
       <bpmn:incoming>Flow_ApplyCartAction</bpmn:incoming>
       <bpmn:outgoing>Flow_CartActionGateway</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -28,12 +28,12 @@
       <bpmn:outgoing>Flow_Checkout</bpmn:outgoing>
       <bpmn:outgoing>Flow_ContinueShopping</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:serviceTask id="createOrder" name="Create order transactionally" camunda:delegateExpression="${createOrderDelegate}">
+    <bpmn:serviceTask id="createOrder" name="Create order transactionally" camunda:type="external" camunda:topic="delivery-create-order">
       <bpmn:incoming>Flow_DirectCheckout</bpmn:incoming>
       <bpmn:incoming>Flow_Checkout</bpmn:incoming>
       <bpmn:outgoing>Flow_ShopDecision</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:userTask id="shopDecision" name="Shop decision" camunda:formRef="shop-decision" camunda:formRefBinding="deployment" camunda:assignee="${shopUsername}">
+    <bpmn:userTask id="shopDecision" name="Shop decision" camunda:formRef="shop-decision" camunda:formRefBinding="deployment" camunda:assignee="shop">
       <bpmn:incoming>Flow_ShopDecision</bpmn:incoming>
       <bpmn:outgoing>Flow_DecisionGateway</bpmn:outgoing>
     </bpmn:userTask>
@@ -43,7 +43,7 @@
         <bpmn:timeDuration>PT10M</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
-    <bpmn:serviceTask id="shopTimedOut" name="Decline after shop timeout" camunda:delegateExpression="${shopTimeoutDelegate}">
+    <bpmn:serviceTask id="shopTimedOut" name="Decline after shop timeout" camunda:type="external" camunda:topic="delivery-shop-timeout">
       <bpmn:incoming>Flow_ShopTimeout</bpmn:incoming>
       <bpmn:outgoing>Flow_ShopTimeoutNotice</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -52,11 +52,11 @@
       <bpmn:outgoing>Flow_Accepted</bpmn:outgoing>
       <bpmn:outgoing>Flow_Declined</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:serviceTask id="orderAccepted" name="Accept order" camunda:delegateExpression="${shopAcceptedDelegate}">
+    <bpmn:serviceTask id="orderAccepted" name="Accept order" camunda:type="external" camunda:topic="delivery-shop-accepted">
       <bpmn:incoming>Flow_Accepted</bpmn:incoming>
       <bpmn:outgoing>Flow_DispatchCourierSearch</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="dispatchCourierSearch" name="Request courier through AMQP" camunda:asyncBefore="true" camunda:delegateExpression="${dispatchCourierSearchDelegate}">
+    <bpmn:serviceTask id="dispatchCourierSearch" name="Request courier through AMQP" camunda:type="external" camunda:topic="delivery-dispatch-courier-search">
       <bpmn:incoming>Flow_DispatchCourierSearch</bpmn:incoming>
       <bpmn:outgoing>Flow_WaitCourier</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -77,7 +77,7 @@
         <bpmn:timeDuration>PT10M</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
-    <bpmn:serviceTask id="courierAssignedNotification" name="Notify courier, shop and customer" camunda:delegateExpression="${courierAssignedDelegate}">
+    <bpmn:serviceTask id="courierAssignedNotification" name="Notify courier, shop and customer" camunda:type="external" camunda:topic="delivery-courier-assigned">
       <bpmn:incoming>Flow_NotifyCourierAssigned</bpmn:incoming>
       <bpmn:outgoing>Flow_NotificationSplit</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -91,7 +91,7 @@
       <bpmn:incoming>Flow_CustomerAssignmentNotice</bpmn:incoming>
       <bpmn:outgoing>Flow_CustomerNoticeDone</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:userTask id="shopAssignmentNotice" name="Courier assigned — shop notification" camunda:formRef="assignment-notification" camunda:formRefBinding="deployment" camunda:assignee="${shopUsername}">
+    <bpmn:userTask id="shopAssignmentNotice" name="Courier assigned — shop notification" camunda:formRef="assignment-notification" camunda:formRefBinding="deployment" camunda:assignee="shop">
       <bpmn:incoming>Flow_ShopAssignmentNotice</bpmn:incoming>
       <bpmn:outgoing>Flow_ShopNoticeDone</bpmn:outgoing>
     </bpmn:userTask>
@@ -108,11 +108,11 @@
     <bpmn:endEvent id="endCourierAssigned" name="Courier assigned and notifications delivered">
       <bpmn:incoming>Flow_EndCourierAssigned</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:serviceTask id="courierTimedOut" name="Cancel without courier" camunda:delegateExpression="${courierTimeoutDelegate}">
+    <bpmn:serviceTask id="courierTimedOut" name="Cancel without courier" camunda:type="external" camunda:topic="delivery-courier-timeout">
       <bpmn:incoming>Flow_CancelNoCourier</bpmn:incoming>
       <bpmn:outgoing>Flow_CourierTimeoutNotice</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="orderDeclined" name="Decline order" camunda:delegateExpression="${shopDeclinedDelegate}">
+    <bpmn:serviceTask id="orderDeclined" name="Decline order" camunda:type="external" camunda:topic="delivery-shop-declined">
       <bpmn:incoming>Flow_Declined</bpmn:incoming>
       <bpmn:outgoing>Flow_DeclinedNotice</bpmn:outgoing>
     </bpmn:serviceTask>

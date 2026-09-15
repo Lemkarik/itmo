@@ -12,7 +12,7 @@
     <bpmn:startEvent id="availabilityRequested" name="Set availability" camunda:formRef="courier-availability" camunda:formRefBinding="deployment" camunda:initiator="courierUsername">
       <bpmn:outgoing>Flow_UpdateAvailability</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:serviceTask id="updateAvailability" name="Update availability transactionally" camunda:delegateExpression="${updateCourierAvailabilityDelegate}">
+    <bpmn:serviceTask id="updateAvailability" name="Update availability transactionally" camunda:type="external" camunda:topic="delivery-update-courier-availability">
       <bpmn:incoming>Flow_UpdateAvailability</bpmn:incoming>
       <bpmn:outgoing>Flow_ShowAvailability</bpmn:outgoing>
     </bpmn:serviceTask>

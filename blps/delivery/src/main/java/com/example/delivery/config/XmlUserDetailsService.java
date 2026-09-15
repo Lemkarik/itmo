@@ -2,6 +2,7 @@ package com.example.delivery.config;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -10,6 +11,8 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +23,13 @@ public class XmlUserDetailsService {
 
     private final List<XmlUser> users = new ArrayList<>();
     private final UserRepository userRepository;
+    private final String usersXmlPath;
 
-    public XmlUserDetailsService(UserRepository userRepository) {
+    public XmlUserDetailsService(
+            UserRepository userRepository,
+            @Value("${app.security.users-xml:}") String usersXmlPath) {
         this.userRepository = userRepository;
+        this.usersXmlPath = usersXmlPath;
     }
 
     @PostConstruct
@@ -30,8 +37,7 @@ public class XmlUserDetailsService {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            ClassPathResource resource = new ClassPathResource("users.xml");
-            try (InputStream is = resource.getInputStream()) {
+            try (InputStream is = openUsersXml()) {
                 Document doc = builder.parse(is);
                 NodeList userNodes = doc.getElementsByTagName("user");
                 for (int i = 0; i < userNodes.getLength(); i++) {
@@ -45,6 +51,13 @@ public class XmlUserDetailsService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load users.xml", e);
         }
+    }
+
+    private InputStream openUsersXml() throws Exception {
+        if (usersXmlPath != null && !usersXmlPath.isBlank()) {
+            return Files.newInputStream(Path.of(usersXmlPath));
+        }
+        return new ClassPathResource("users.xml").getInputStream();
     }
 
     public XmlUser findByUsername(String username) {

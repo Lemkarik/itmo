@@ -52,23 +52,11 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Camunda is provided by the standalone/shared engine installed in WildFly. -->
+		<!-- The process engine is a separate service; this client executes BPMN external tasks over REST. -->
 		<dependency>
 			<groupId>org.camunda.bpm</groupId>
-			<artifactId>camunda-engine</artifactId>
+			<artifactId>camunda-external-task-client</artifactId>
 			<version>${camunda.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.camunda.bpm</groupId>
-			<artifactId>camunda-engine-spring</artifactId>
-			<version>${camunda.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.camunda.bpm</groupId>
-					<artifactId>camunda-engine</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- JMS over AMQP 1.0; Apache ActiveMQ runs as a separate broker service. -->

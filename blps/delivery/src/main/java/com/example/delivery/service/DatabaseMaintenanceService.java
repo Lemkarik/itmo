@@ -12,7 +12,8 @@ import com.example.delivery.model.Privilege;
 public class DatabaseMaintenanceService {
 
     private static final String TRUNCATE_ALL_TABLES = """
-            TRUNCATE TABLE notifications, order_items, orders, cart_items, carts, shop_items, users
+            TRUNCATE TABLE processed_external_tasks, notifications, order_items, orders,
+                cart_items, carts, shop_items, users
             RESTART IDENTITY CASCADE
             """;
 
