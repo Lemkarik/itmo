@@ -9,7 +9,7 @@
       <bpmn:incoming>Flow_InitializeShopping</bpmn:incoming>
       <bpmn:outgoing>Flow_DirectCheckoutGateway</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="directCheckoutGateway" name="REST checkout?" default="Flow_ManageCart">
+    <bpmn:exclusiveGateway id="directCheckoutGateway" name="Checkout?" default="Flow_ManageCart">
       <bpmn:incoming>Flow_DirectCheckoutGateway</bpmn:incoming>
       <bpmn:outgoing>Flow_DirectCheckout</bpmn:outgoing>
       <bpmn:outgoing>Flow_ManageCart</bpmn:outgoing>
@@ -177,7 +177,7 @@
       <bpmndi:BPMNShape id="directCheckoutGateway_di" bpmnElement="directCheckoutGateway" isMarkerVisible="true">
         <dc:Bounds x="410" y="213" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="394" y="263" width="83" height="14" />
+          <dc:Bounds x="409" y="263" width="53" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="manageCart_di" bpmnElement="manageCart">
