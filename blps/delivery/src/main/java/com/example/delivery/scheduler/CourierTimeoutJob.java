@@ -46,7 +46,6 @@ public class CourierTimeoutJob implements Job {
         }
     }
 
-    @Transactional
     protected void retryCourierAssignments() {
         List<Order> waitingOrders = orderRepository.findByStatusOrderByCreatedAtAsc(
                 OrderStatus.ACCEPTED_WAITING_COURIER);

@@ -1,8 +1,8 @@
 package com.example.delivery.config;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.sql.DataSource;
 
@@ -21,10 +21,15 @@ import com.example.delivery.scheduler.CourierTimeoutJob;
 public class QuartzConfig {
 
     private static final long ONE_MINUTE_MS = 60_000L;
-    private static final String LEGACY_SHOP_TIMEOUT_JOB = "ShopTimeoutJob";
-    private static final String LEGACY_SHOP_TIMEOUT_JOB_GROUP = "DeliveryJobs";
-    private static final String LEGACY_SHOP_TIMEOUT_TRIGGER = "ShopTimeoutTrigger";
-    private static final String LEGACY_SHOP_TIMEOUT_TRIGGER_GROUP = "DeliveryTriggers";
+    private static final String[] LEGACY_SHOP_TIMEOUT_DELETE_SQL = {
+        "DELETE FROM qrtz_fired_triggers WHERE (job_name = 'ShopTimeoutJob' AND job_group = 'DeliveryJobs') OR (trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers')",
+        "DELETE FROM qrtz_simple_triggers WHERE trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers'",
+        "DELETE FROM qrtz_simprop_triggers WHERE trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers'",
+        "DELETE FROM qrtz_cron_triggers WHERE trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers'",
+        "DELETE FROM qrtz_blob_triggers WHERE trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers'",
+        "DELETE FROM qrtz_triggers WHERE (job_name = 'ShopTimeoutJob' AND job_group = 'DeliveryJobs') OR (trigger_name = 'ShopTimeoutTrigger' AND trigger_group = 'DeliveryTriggers')",
+        "DELETE FROM qrtz_job_details WHERE job_name = 'ShopTimeoutJob' AND job_group = 'DeliveryJobs'"
+    };
 
     @Bean
     public SchedulerFactoryBeanCustomizer removeLegacyShopTimeoutJob(DataSource dataSource) {
@@ -57,80 +62,18 @@ public class QuartzConfig {
 
     private void deleteLegacyShopTimeoutJob(DataSource dataSource) {
         try (Connection connection = dataSource.getConnection()) {
-            boolean autoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
-            try {
-                deleteLegacyFiredTriggers(connection);
-                deleteLegacyTriggerDetails(connection);
-                deleteLegacyTriggers(connection);
-                deleteLegacyJob(connection);
+            try (Statement statement = connection.createStatement()) {
+                for (String sql : LEGACY_SHOP_TIMEOUT_DELETE_SQL) {
+                    statement.executeUpdate(sql);
+                }
                 connection.commit();
             } catch (SQLException exception) {
                 connection.rollback();
                 throw exception;
-            } finally {
-                connection.setAutoCommit(autoCommit);
             }
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to remove obsolete shop-timeout Quartz state", exception);
         }
-    }
-
-    private void deleteLegacyFiredTriggers(Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-                DELETE FROM qrtz_fired_triggers
-                WHERE (job_name = ? AND job_group = ?)
-                   OR (trigger_name = ? AND trigger_group = ?)
-                """)) {
-            setLegacyJobAndTriggerParameters(statement);
-            statement.executeUpdate();
-        }
-    }
-
-    private void deleteLegacyTriggers(Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-                DELETE FROM qrtz_triggers
-                WHERE (job_name = ? AND job_group = ?)
-                   OR (trigger_name = ? AND trigger_group = ?)
-                """)) {
-            setLegacyJobAndTriggerParameters(statement);
-            statement.executeUpdate();
-        }
-    }
-
-    private void deleteLegacyTriggerDetails(Connection connection) throws SQLException {
-        deleteLegacyTriggerDetails(connection, "qrtz_simple_triggers");
-        deleteLegacyTriggerDetails(connection, "qrtz_simprop_triggers");
-        deleteLegacyTriggerDetails(connection, "qrtz_cron_triggers");
-        deleteLegacyTriggerDetails(connection, "qrtz_blob_triggers");
-    }
-
-    private void deleteLegacyTriggerDetails(Connection connection, String tableName) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-                DELETE FROM %s
-                WHERE trigger_name = ? AND trigger_group = ?
-                """.formatted(tableName))) {
-            statement.setString(1, LEGACY_SHOP_TIMEOUT_TRIGGER);
-            statement.setString(2, LEGACY_SHOP_TIMEOUT_TRIGGER_GROUP);
-            statement.executeUpdate();
-        }
-    }
-
-    private void deleteLegacyJob(Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-                DELETE FROM qrtz_job_details
-                WHERE job_name = ? AND job_group = ?
-                """)) {
-            statement.setString(1, LEGACY_SHOP_TIMEOUT_JOB);
-            statement.setString(2, LEGACY_SHOP_TIMEOUT_JOB_GROUP);
-            statement.executeUpdate();
-        }
-    }
-
-    private void setLegacyJobAndTriggerParameters(PreparedStatement statement) throws SQLException {
-        statement.setString(1, LEGACY_SHOP_TIMEOUT_JOB);
-        statement.setString(2, LEGACY_SHOP_TIMEOUT_JOB_GROUP);
-        statement.setString(3, LEGACY_SHOP_TIMEOUT_TRIGGER);
-        statement.setString(4, LEGACY_SHOP_TIMEOUT_TRIGGER_GROUP);
     }
 }
