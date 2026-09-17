@@ -14,6 +14,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 public class XmlJaasLoginModule implements LoginModule {
 
     static final String USER_STORE_OPTION = "userStore";
@@ -50,7 +52,7 @@ public class XmlJaasLoginModule implements LoginModule {
             clear();
             throw new LoginException("Unknown delivery user");
         }
-        if (password == null || !Arrays.equals(account.password().toCharArray(), password)) {
+        if (password == null || !matches(password, account.password())) {
             clear();
             throw new LoginException("Invalid password");
         }
@@ -91,6 +93,16 @@ public class XmlJaasLoginModule implements LoginModule {
         if (password != null) {
             Arrays.fill(password, '\0');
             password = null;
+        }
+    }
+
+    private boolean matches(char[] rawPassword, String passwordHash) {
+        try {
+            return passwordHash != null
+                    && passwordHash.startsWith("$2")
+                    && BCrypt.checkpw(new String(rawPassword), passwordHash);
+        } catch (IllegalArgumentException exception) {
+            return false;
         }
     }
 

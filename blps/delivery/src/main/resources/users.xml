@@ -3,35 +3,35 @@
     <!-- Admin user -->
     <user>
         <username>admin</username>
-        <password>admin123</password>
+        <password>$2a$10$1ooM2THK73.WICZ94M42beo1/lQFxOj4kPPwFwnTUvphbWPcAWduK</password>
         <role>ADMIN</role>
     </user>
     <!-- Customer users -->
     <user>
         <username>alice</username>
-        <password>password</password>
+        <password>$2a$10$7ZfeiOLrNvPCTXftsF2iE.Sw8gW7q2F74tgXZtlc7h.LkbZQYJYT2</password>
         <role>CUSTOMER</role>
     </user>
     <user>
         <username>bob</username>
-        <password>password</password>
+        <password>$2a$10$/Us8O7OnFU4OVHWwWc7no.P.q6bw5Jllp.LAi1RVQZphfpuMxmR0y</password>
         <role>CUSTOMER</role>
     </user>
     <!-- Shop user -->
     <user>
         <username>shop</username>
-        <password>shop123</password>
+        <password>$2a$10$iXKEKtL7dvX/0fpOWS0RQO0oEa7gdZzfNL08IwWRgFt/fTTkCBdli</password>
         <role>SHOP</role>
     </user>
     <!-- Courier users -->
     <user>
         <username>courier1</username>
-        <password>courier123</password>
+        <password>$2a$10$WAz5Pp6jg5YKf7FAbIrD7eHOXlFoPHqCoTXJGztMWD7EOmDKkcSDO</password>
         <role>COURIER</role>
     </user>
     <user>
         <username>courier2</username>
-        <password>courier456</password>
+        <password>$2a$10$KTS/8VrxYnoan1HqR8833eaq03szhYPssfx8o9rXFZM0tVKGWCzSO</password>
         <role>COURIER</role>
     </user>
 </users>

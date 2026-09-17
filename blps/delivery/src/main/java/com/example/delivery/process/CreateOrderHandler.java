@@ -33,8 +33,8 @@ public class CreateOrderHandler implements DeliveryExternalTaskHandler {
         CreateOrderRequest request = new CreateOrderRequest();
         request.setDeliveryAddress(task.getVariable("deliveryAddress"));
         request.setDeliveryTime(ExternalTaskVariables.dateTime(task, "requestedDeliveryTime"));
-        OrderResponse order = orderService.createOrder(customerId, request);
-        orderService.linkProcessInstance(order.getId(), task.getProcessInstanceId());
+        OrderResponse order = orderService.createOrder(
+                customerId, request, task.getProcessInstanceId());
         cartProcessSynchronizationService.synchronize(
                 customerId, InitializeShoppingHandler.EMPTY_CART_SUMMARY, task.getProcessInstanceId());
 

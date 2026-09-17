@@ -3,6 +3,7 @@ package com.example.delivery.service;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import com.example.delivery.dto.OrderItemResponse;
 import com.example.delivery.dto.OrderResponse;
 import com.example.delivery.dto.PaginationRequest;
 import com.example.delivery.exception.BadRequestException;
+import com.example.delivery.exception.ConflictException;
 import com.example.delivery.exception.NotFoundException;
 import com.example.delivery.messaging.MessageProducerService;
 import com.example.delivery.model.Cart;
@@ -57,16 +59,35 @@ public class OrderService {
 
 	@Transactional
 	public OrderResponse createOrder(Long customerId, CreateOrderRequest request) {
-		if (request == null) {
-			throw new BadRequestException("Request body is required");
+		return createOrder(customerId, request, null);
+	}
+
+	@Transactional(readOnly = true)
+	public void validateOrderCreation(Long customerId, CreateOrderRequest request) {
+		validateRequest(request);
+		if (cartService.getCart(customerId).getItems().isEmpty()) {
+			throw new BadRequestException("Cart is empty");
 		}
-		if (request.getDeliveryAddress() == null || request.getDeliveryAddress().isBlank()) {
-			throw new BadRequestException("Delivery address is required");
+	}
+
+	@Transactional
+	public OrderResponse createOrder(
+			Long customerId,
+			CreateOrderRequest request,
+			String processInstanceId
+	) {
+		if (processInstanceId != null && !processInstanceId.isBlank()) {
+			Optional<Order> existingOrder = orderRepository.findByProcessInstanceId(processInstanceId);
+			if (existingOrder.isPresent()) {
+				Order order = existingOrder.get();
+				if (!order.getCustomer().getId().equals(customerId)) {
+					throw new ConflictException("Process instance is already linked to another customer");
+				}
+				return toResponse(order);
+			}
 		}
+		validateRequest(request);
 		OffsetDateTime now = OffsetDateTime.now(clock);
-		if (request.getDeliveryTime() != null && !request.getDeliveryTime().isAfter(now)) {
-			throw new BadRequestException("Delivery date and time must be in the future");
-		}
 
 		User customer = userService.getUserWithRole(customerId, UserRole.CUSTOMER);
 		User shop = userService.getDefaultShop();
@@ -83,6 +104,7 @@ public class OrderService {
 		order.setDeliveryAddress(request.getDeliveryAddress().trim());
 		order.setRequestedDeliveryTime(request.getDeliveryTime());
 		order.setDeliveryTime(request.getDeliveryTime());
+		order.setProcessInstanceId(processInstanceId);
 		order.setCreatedAt(now);
 		order.setUpdatedAt(now);
 
@@ -132,6 +154,13 @@ public class OrderService {
 	}
 
 	@Transactional(readOnly = true)
+	public OrderResponse findByProcessInstanceId(String processInstanceId) {
+		return orderRepository.findByProcessInstanceId(processInstanceId)
+				.map(this::toResponse)
+				.orElse(null);
+	}
+
+	@Transactional(readOnly = true)
 	public OrderResponse getOrderForUser(Long orderId, Long userId, UserRole role) {
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
@@ -150,14 +179,6 @@ public class OrderService {
 	public Order getOrderEntity(Long orderId) {
 		return orderRepository.findById(orderId)
 				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
-	}
-
-	@Transactional
-	public void linkProcessInstance(Long orderId, String processInstanceId) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
-		order.setProcessInstanceId(processInstanceId);
-		orderRepository.save(order);
 	}
 
 	@Transactional(readOnly = true)
@@ -211,5 +232,18 @@ public class OrderService {
 				order.getCourierAssignedAt(),
 				items
 		);
+	}
+
+	private void validateRequest(CreateOrderRequest request) {
+		if (request == null) {
+			throw new BadRequestException("Request body is required");
+		}
+		if (request.getDeliveryAddress() == null || request.getDeliveryAddress().isBlank()) {
+			throw new BadRequestException("Delivery address is required");
+		}
+		if (request.getDeliveryTime() != null
+				&& !request.getDeliveryTime().isAfter(OffsetDateTime.now(clock))) {
+			throw new BadRequestException("Delivery date and time must be in the future");
+		}
 	}
 }

@@ -24,7 +24,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/register/courier",
+                        "/api/auth/logout").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/v3/api-docs.yaml").permitAll()
                 .requestMatchers("/").permitAll()

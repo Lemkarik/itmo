@@ -12,6 +12,8 @@
       "name": "JWT Tokens (auto-set by login requests)",
       "data": {
         "jwt_admin": "",
+        "jwt_registered": "",
+        "jwt_registered_courier": "",
         "jwt_alice": "",
         "jwt_bob": "",
         "jwt_shop": "",
@@ -91,6 +93,54 @@
       "name": "40. Invalid Requests",
       "description": "Negative tests for auth failures, validation, pagination, etc.",
       "_type": "request_group"
+    },
+    {
+      "_id": "req_register_customer",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Register Customer",
+      "description": "Creates a CUSTOMER account in PostgreSQL, users.xml and Camunda, then saves its JWT.",
+      "url": "http://localhost:32318/delivery-0.0.1-SNAPSHOT/api/auth/register",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_register_customer",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"charlie\", \"password\": \"password123\", \"name\": \"Charlie Customer\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "if (insomnia.response.code >= 200 && insomnia.response.code < 300) {\n  const response = insomnia.response.json();\n  insomnia.environment.set(\"jwt_registered\", response.token);\n}"
+    },
+    {
+      "_id": "req_register_courier",
+      "parentId": "fld_fld_auth",
+      "created": 1763384400000,
+      "modified": 1763384400000,
+      "name": "Register Courier",
+      "description": "Creates a COURIER account in PostgreSQL, users.xml and Camunda, then saves its JWT.",
+      "url": "http://localhost:32318/delivery-0.0.1-SNAPSHOT/api/auth/register/courier",
+      "method": "POST",
+      "headers": [
+        {
+          "id": "pair_ct_register_courier",
+          "name": "Content-Type",
+          "value": "application/json",
+          "description": ""
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"username\": \"courier3\", \"password\": \"courier789\", \"name\": \"Courier Three\"}"
+      },
+      "_type": "request",
+      "afterResponseScript": "if (insomnia.response.code >= 200 && insomnia.response.code < 300) {\n  const response = insomnia.response.json();\n  insomnia.environment.set(\"jwt_registered_courier\", response.token);\n}"
     },
     {
       "_id": "req_login_as_admin",

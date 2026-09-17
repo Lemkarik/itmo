@@ -2,6 +2,7 @@ package com.example.delivery.camunda.identity;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,15 +19,23 @@ final class XmlUserStore {
     static final String USERS_PATH_PROPERTY = "delivery.users.xml";
     static final String USERS_PATH_ENV = "DELIVERY_USERS_XML";
 
-    private final List<UserAccount> users;
-    private String source;
+    private final Path usersXmlPath;
+    private final String source;
 
     XmlUserStore() {
-        this.users = loadUsers();
+        String path = System.getProperty(USERS_PATH_PROPERTY);
+        if (path == null || path.isBlank()) {
+            path = System.getenv(USERS_PATH_ENV);
+        }
+        usersXmlPath = path == null || path.isBlank()
+                ? Path.of(System.getProperty("user.home"), ".delivery", "users.xml").toAbsolutePath()
+                : Path.of(path).toAbsolutePath();
+        initializeUsersXml();
+        source = usersXmlPath.toString();
     }
 
     List<UserAccount> users() {
-        return users;
+        return loadUsers();
     }
 
     String source() {
@@ -34,7 +43,7 @@ final class XmlUserStore {
     }
 
     UserAccount find(String username) {
-        return users.stream()
+        return loadUsers().stream()
                 .filter(user -> user.username().equals(username))
                 .findFirst()
                 .orElse(null);
@@ -64,21 +73,26 @@ final class XmlUserStore {
     }
 
     private InputStream openUsersXml() throws IOException {
-        String configuredPath = System.getProperty(USERS_PATH_PROPERTY);
-        if (configuredPath == null || configuredPath.isBlank()) {
-            configuredPath = System.getenv(USERS_PATH_ENV);
+        return Files.newInputStream(usersXmlPath);
+    }
+
+    private void initializeUsersXml() {
+        if (Files.isRegularFile(usersXmlPath)) {
+            return;
         }
-        if (configuredPath != null && !configuredPath.isBlank()) {
-            Path path = Path.of(configuredPath).toAbsolutePath();
-            source = path.toString();
-            return Files.newInputStream(path);
+        try {
+            Files.createDirectories(usersXmlPath.getParent());
+            try (InputStream resource = XmlUserStore.class.getClassLoader().getResourceAsStream("users.xml")) {
+                if (resource == null) {
+                    throw new IOException("users.xml is absent from the plugin classpath");
+                }
+                Files.copy(resource, usersXmlPath);
+            } catch (FileAlreadyExistsException ignored) {
+                return;
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot initialize delivery users.xml", exception);
         }
-        source = "embedded users.xml";
-        InputStream resource = XmlUserStore.class.getClassLoader().getResourceAsStream("users.xml");
-        if (resource == null) {
-            throw new IOException("users.xml is absent from the plugin classpath");
-        }
-        return resource;
     }
 
     private String text(Element element, String tagName) {

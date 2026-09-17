@@ -5,18 +5,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.delivery.dto.CreateOrderRequest;
 import com.example.delivery.dto.OrderResponse;
-import com.example.delivery.exception.BadRequestException;
 import com.example.delivery.exception.ConflictException;
 import com.example.delivery.model.Order;
+import com.example.delivery.model.OrderStatus;
 import com.example.delivery.service.OrderService;
 
 @Service
 public class DeliveryProcessService {
+
+    private static final Logger log = LoggerFactory.getLogger(DeliveryProcessService.class);
+    private static final String MANAGE_CART_TASK = "manageCart";
 
     public static final String PROCESS_KEY = "delivery-order";
     public static final String COURIER_AVAILABILITY_PROCESS_KEY = "courier-availability";
@@ -36,23 +41,39 @@ public class DeliveryProcessService {
     }
 
     public OrderResponse startOrderProcess(Long customerId, CreateOrderRequest request) {
-        if (request == null) {
-            throw new BadRequestException("Request body is required");
-        }
+        orderService.validateOrderCreation(customerId, request);
+        List<CamundaRestClient.TaskReference> shoppingTasks = camundaRestClient.findTasks(
+                PROCESS_KEY, MANAGE_CART_TASK, "customerId_eq_" + customerId);
         Map<String, Object> variables = new LinkedHashMap<>();
-        variables.put("customerId", customerId);
         variables.put("deliveryAddress", request.getDeliveryAddress());
         variables.put("requestedDeliveryTime",
                 request.getDeliveryTime() == null ? null : request.getDeliveryTime().toString());
-        variables.put("directCheckout", true);
-        String processInstanceId = camundaRestClient.startProcess(PROCESS_KEY, variables);
-        Long orderId = awaitOrderId(processInstanceId);
-        return orderService.getOrder(orderId);
+
+        String processInstanceId;
+        if (shoppingTasks.isEmpty()) {
+            variables.put("customerId", customerId);
+            variables.put("directCheckout", true);
+            processInstanceId = camundaRestClient.startProcess(PROCESS_KEY, variables);
+        } else {
+            CamundaRestClient.TaskReference shoppingTask = shoppingTasks.get(0);
+            variables.put("cartAction", "CHECKOUT");
+            camundaRestClient.completeTask(shoppingTask.id(), variables);
+            processInstanceId = shoppingTask.processInstanceId();
+        }
+
+        OrderResponse order = awaitOrder(processInstanceId);
+        closeOtherShoppingProcesses(shoppingTasks, processInstanceId);
+        return order;
     }
 
     public void completeShopDecision(Long orderId, boolean accepted, String reason) {
-        List<CamundaRestClient.TaskReference> tasks = camundaRestClient.findTasks(
-                PROCESS_KEY, "shopDecision", ORDER_ID + "_eq_" + orderId);
+        Order order = orderService.getOrderEntity(orderId);
+        if (order.getStatus() != OrderStatus.PENDING_SHOP
+                || order.getProcessInstanceId() == null
+                || order.getProcessInstanceId().isBlank()) {
+            throw new ConflictException("Order " + orderId + " is not waiting for a shop decision");
+        }
+        List<CamundaRestClient.TaskReference> tasks = awaitShopDecisionTask(order.getProcessInstanceId());
         if (tasks.size() != 1) {
             throw new ConflictException("Order " + orderId + " is not waiting for a shop decision");
         }
@@ -72,21 +93,55 @@ public class DeliveryProcessService {
                 Map.of("courierId", order.getCourier().getId()));
     }
 
-    private Long awaitOrderId(String processInstanceId) {
+    private OrderResponse awaitOrder(String processInstanceId) {
         long deadline = System.nanoTime() + orderStartTimeout.toNanos();
         do {
-            Long orderId = camundaRestClient.getLongProcessVariable(processInstanceId, ORDER_ID);
-            if (orderId != null) {
-                return orderId;
+            OrderResponse order = orderService.findByProcessInstanceId(processInstanceId);
+            if (order != null) {
+                return order;
             }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Interrupted while waiting for order creation", exception);
-            }
+            pause();
         } while (System.nanoTime() < deadline);
         throw new IllegalStateException(
-                "Camunda process did not create the order within " + orderStartTimeout.toSeconds() + " seconds");
+                "Camunda process did not create the order within "
+                        + orderStartTimeout.toSeconds() + " seconds");
+    }
+
+    private List<CamundaRestClient.TaskReference> awaitShopDecisionTask(String processInstanceId) {
+        long deadline = System.nanoTime() + orderStartTimeout.toNanos();
+        do {
+            List<CamundaRestClient.TaskReference> tasks = camundaRestClient.findTasksByProcessInstance(
+                    PROCESS_KEY, "shopDecision", processInstanceId);
+            if (!tasks.isEmpty()) {
+                return tasks;
+            }
+            pause();
+        } while (System.nanoTime() < deadline);
+        return List.of();
+    }
+
+    private void closeOtherShoppingProcesses(
+            List<CamundaRestClient.TaskReference> shoppingTasks,
+            String completedProcessInstanceId) {
+        shoppingTasks.stream()
+                .map(CamundaRestClient.TaskReference::processInstanceId)
+                .filter(processInstanceId -> !processInstanceId.equals(completedProcessInstanceId))
+                .distinct()
+                .forEach(processInstanceId -> {
+                    try {
+                        camundaRestClient.deleteProcessInstance(processInstanceId);
+                    } catch (RuntimeException exception) {
+                        log.warn("Could not close obsolete shopping process {}", processInstanceId, exception);
+                    }
+                });
+    }
+
+    private void pause() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for Camunda", exception);
+        }
     }
 }

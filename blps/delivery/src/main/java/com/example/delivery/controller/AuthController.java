@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.delivery.config.JwtUtil;
 import com.example.delivery.dto.LoginRequest;
+import com.example.delivery.dto.RegisterRequest;
+import com.example.delivery.model.User;
+import com.example.delivery.service.RegistrationService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -24,21 +27,39 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final RegistrationService registrationService;
 
     public AuthController(AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil) {
+                          JwtUtil jwtUtil,
+                          RegistrationService registrationService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.registrationService = registrationService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        return authenticate(request.getUsername(), request.getPassword());
+    }
 
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        User user = registrationService.registerCustomer(request);
+        return authenticate(user.getUsername(), request.getPassword());
+    }
+
+    @PostMapping("/register/courier")
+    public ResponseEntity<?> registerCourier(@RequestBody RegisterRequest request) {
+        User user = registrationService.registerCourier(request);
+        return authenticate(user.getUsername(), request.getPassword());
+    }
+
+    private ResponseEntity<?> authenticate(String username, String password) {
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                request.getUsername(),
-                                request.getPassword()));
+                                username,
+                                password));
 
         JwtUserDetails user =
                 (JwtUserDetails) authentication.getPrincipal();
@@ -51,10 +72,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, jwtCookie(token).toString())
-                .body(Map.of(
-                        "token", token,
-                        "username", user.getUsername(),
-                        "role", user.getRole()));
+                .body(Map.of("token", token));
     }
 
     @GetMapping("/me")

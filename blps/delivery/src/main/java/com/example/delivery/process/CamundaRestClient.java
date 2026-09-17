@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -11,6 +12,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
+
+import com.example.delivery.model.UserRole;
 
 @Component
 public class CamundaRestClient {
@@ -31,44 +34,23 @@ public class CamundaRestClient {
     }
 
     public String startProcess(String processDefinitionKey, Map<String, Object> variables) {
-        ProcessInstanceResponse response = client.post()
+        Map<String, Object> response = client.post()
                 .uri("/process-definition/key/{key}/start", processDefinitionKey)
                 .body(Map.of("variables", variableMap(variables)))
                 .retrieve()
-                .body(ProcessInstanceResponse.class);
-        if (response == null || response.id() == null) {
+                .body(new ParameterizedTypeReference<Map<String, Object>>() { });
+        Object processInstanceId = response == null ? null : response.get("id");
+        if (processInstanceId == null || processInstanceId.toString().isBlank()) {
             throw new IllegalStateException("Camunda did not return a process instance id");
         }
-        return response.id();
-    }
-
-    public Long getLongProcessVariable(String processInstanceId, String variableName) {
-        VariableResponse response;
-        try {
-            response = client.get()
-                    .uri("/process-instance/{id}/variables/{name}", processInstanceId, variableName)
-                    .retrieve()
-                    .body(VariableResponse.class);
-        } catch (RestClientResponseException exception) {
-            if (exception.getStatusCode().value() == 404) {
-                return null;
-            }
-            throw exception;
-        }
-        if (response == null || response.value() == null) {
-            return null;
-        }
-        if (response.value() instanceof Number number) {
-            return number.longValue();
-        }
-        return Long.valueOf(response.value().toString());
+        return processInstanceId.toString();
     }
 
     public List<TaskReference> findTasks(
             String processDefinitionKey,
             String taskDefinitionKey,
             String processVariableFilter) {
-        List<TaskReference> tasks = client.get()
+        List<Map<String, Object>> tasks = client.get()
                 .uri(builder -> {
                     var uri = builder.path("/task")
                             .queryParam("processDefinitionKey", processDefinitionKey)
@@ -80,8 +62,24 @@ public class CamundaRestClient {
                     return uri.build();
                 })
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<TaskReference>>() { });
-        return tasks == null ? List.of() : tasks;
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() { });
+        return taskReferences(tasks);
+    }
+
+    public List<TaskReference> findTasksByProcessInstance(
+            String processDefinitionKey,
+            String taskDefinitionKey,
+            String processInstanceId) {
+        List<Map<String, Object>> tasks = client.get()
+                .uri(builder -> builder.path("/task")
+                        .queryParam("processDefinitionKey", processDefinitionKey)
+                        .queryParam("taskDefinitionKey", taskDefinitionKey)
+                        .queryParam("processInstanceId", processInstanceId)
+                        .queryParam("active", true)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() { });
+        return taskReferences(tasks);
     }
 
     public void completeTask(String taskId, Map<String, Object> variables) {
@@ -90,6 +88,19 @@ public class CamundaRestClient {
                 .body(Map.of("variables", variableMap(variables)))
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    public void deleteProcessInstance(String processInstanceId) {
+        try {
+            client.delete()
+                    .uri("/process-instance/{id}", processInstanceId)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() != 404) {
+                throw exception;
+            }
+        }
     }
 
     public void setProcessVariable(String processInstanceId, String name, Object value) {
@@ -116,6 +127,57 @@ public class CamundaRestClient {
                 .toBodilessEntity();
     }
 
+    public boolean userExists(String username) {
+        try {
+            client.get()
+                    .uri("/user/{id}/profile", username)
+                    .retrieve()
+                    .toBodilessEntity();
+            return true;
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 404) {
+                return false;
+            }
+            throw exception;
+        }
+    }
+
+    public void createUser(String username, String name, UserRole role) {
+        Map<String, Object> request = Map.of(
+                "profile", Map.of(
+                        "id", username,
+                        "firstName", name,
+                        "lastName", role.name()),
+                "credentials", Map.of("password", UUID.randomUUID().toString()));
+        client.post()
+                .uri("/user/create")
+                .body(request)
+                .retrieve()
+                .toBodilessEntity();
+        try {
+            client.put()
+                    .uri("/group/{group}/members/{id}", role.name(), username)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RuntimeException exception) {
+            deleteUser(username);
+            throw exception;
+        }
+    }
+
+    public void deleteUser(String username) {
+        try {
+            client.delete()
+                    .uri("/user/{id}", username)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() != 404) {
+                throw exception;
+            }
+        }
+    }
+
     private Map<String, VariableValue> variableMap(Map<String, Object> variables) {
         Map<String, VariableValue> result = new LinkedHashMap<>();
         variables.forEach((name, value) -> {
@@ -139,10 +201,23 @@ public class CamundaRestClient {
         return new VariableValue(value.toString(), "String");
     }
 
-    private record ProcessInstanceResponse(String id) {
+    private List<TaskReference> taskReferences(List<Map<String, Object>> tasks) {
+        if (tasks == null) {
+            return List.of();
+        }
+        return tasks.stream()
+                .map(task -> new TaskReference(
+                        requiredResponseValue(task, "id"),
+                        requiredResponseValue(task, "processInstanceId")))
+                .toList();
     }
 
-    private record VariableResponse(Object value, String type) {
+    private String requiredResponseValue(Map<String, Object> response, String name) {
+        Object value = response.get(name);
+        if (value == null || value.toString().isBlank()) {
+            throw new IllegalStateException("Camunda response does not contain " + name);
+        }
+        return value.toString();
     }
 
     private record VariableValue(Object value, String type) {

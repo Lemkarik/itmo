@@ -61,7 +61,7 @@ public class JaasLoginModule implements LoginModule {
         }
 
         XmlUserDetailsService.XmlUser user = xmlService.findByUsername(username);
-        if (user == null || !user.password().equals(password)) {
+        if (user == null || !xmlService.passwordMatches(password, user.password())) {
             succeeded = false;
             throw new LoginException("Invalid username or password");
         }
