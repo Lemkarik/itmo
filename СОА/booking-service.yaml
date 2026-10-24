@@ -1,0 +1,203 @@
+openapi: 3.0.4
+info:
+  title: Booking API
+  version: 1.0.0
+  description: |
+    API for the second web service, located at `/booking`.
+servers:
+  - url: https://localhost:32318/booking
+tags:
+  - name: Booking
+    description: Booking operations that use the Ticket Collection API
+
+paths:
+  /sell/{ticket-id}/{person-id}/{price}:
+    post:
+      tags: [Booking]
+      summary: Sell a ticket
+      description: |
+        Sells ticket `ticket-id` to person `person-id` for the specified positive
+        amount. All operation arguments are passed in the URL; the service checks
+        ticket existence and availability through the first service.
+      operationId: sellTicket
+      parameters:
+        - name: ticket-id
+          in: path
+          required: true
+          description: Identifier of the ticket being sold
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - name: person-id
+          in: path
+          required: true
+          description: Identifier of the buyer
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - name: price
+          in: path
+          required: true
+          description: Sale price
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        '200':
+          description: Ticket sold successfully
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SaleResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /event/{event-id}/cancel:
+    post:
+      tags: [Booking]
+      summary: Cancel an event
+      description: |
+        Cancels the event with the specified identifier and deletes all related
+        tickets through the first service API. The event identifier is passed in the URL.
+      operationId: cancelEvent
+      parameters:
+        - name: event-id
+          in: path
+          required: true
+          description: Identifier of the event being cancelled
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Event cancelled and related tickets deleted
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/CancellationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  responses:
+    BadRequest:
+      description: URL parameters have an invalid format or are outside the allowed range
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 400
+            message: Invalid URL parameters
+            timestamp: '2026-10-16T12:00:00Z'
+    NotFound:
+      description: Ticket, buyer, or event was not found
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 404
+            message: Ticket, buyer, or event not found
+            timestamp: '2026-10-16T12:00:00Z'
+    Conflict:
+      description: The operation conflicts with the current resource state, for example the ticket has already been sold
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 409
+            message: Ticket has already been sold
+            timestamp: '2026-10-16T12:00:00Z'
+    BadGateway:
+      description: The first web service is unavailable or returned an invalid response
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 502
+            message: Ticket Collection API is unavailable
+            timestamp: '2026-10-16T12:00:00Z'
+    InternalError:
+      description: Internal booking service error
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: 500
+            message: Internal booking service error
+            timestamp: '2026-10-16T12:00:00Z'
+  schemas:
+    SaleResult:
+      type: object
+      xml:
+        name: saleResult
+      required: [ticketId, personId, price, soldAt]
+      properties:
+        ticketId:
+          type: integer
+          format: int64
+          minimum: 1
+        personId:
+          type: integer
+          format: int64
+          minimum: 1
+        price:
+          type: integer
+          format: int32
+          minimum: 1
+        soldAt:
+          type: string
+          format: date-time
+    CancellationResult:
+      type: object
+      xml:
+        name: cancellationResult
+      required: [eventId, deletedTickets]
+      properties:
+        eventId:
+          type: integer
+          format: int64
+          minimum: 1
+        deletedTickets:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of deleted tickets for the event
+    Error:
+      type: object
+      xml:
+        name: error
+      required: [status, message, timestamp]
+      properties:
+        status:
+          type: integer
+          format: int32
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
